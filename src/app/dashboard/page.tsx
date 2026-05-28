@@ -41,7 +41,7 @@ export default async function DashboardPage({
               text="No reemplaza la toma de decisiones clínica, pero ayuda a mostrar capacidad de planificación, cuellos de botella y priorización."
             />
             <Panel
-              title="Qué conviene contar en la demo"
+              title="Qué conviene destacar"
               text="El sistema no solo predice: también ordena trabajo, resume casos y deja evidencia de las decisiones tomadas."
             />
           </CardContent>

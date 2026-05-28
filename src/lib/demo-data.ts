@@ -6,7 +6,7 @@ export type CaseStatus =
 
 export type RoleKey = "enfermeria" | "medico" | "cardiologia" | "coordinacion";
 
-export type DemoEvent = {
+export type CaseEvent = {
   title: string;
   by: string;
   note: string;
@@ -37,7 +37,7 @@ export type PatientCase = {
     stSlope: string;
   };
   insights: string[];
-  events: DemoEvent[];
+  events: CaseEvent[];
 };
 
 export type Palette = {

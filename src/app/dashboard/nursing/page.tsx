@@ -32,7 +32,6 @@ export default async function NursingPage({ searchParams }: NursingPageProps) {
         <Card className="border-border/70 bg-card/90">
           <CardHeader>
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="outline">Ruta: `/dashboard/nursing`</Badge>
               <Badge variant="outline">Bandeja de rol</Badge>
             </div>
             <CardTitle className="text-3xl">Enfermería</CardTitle>

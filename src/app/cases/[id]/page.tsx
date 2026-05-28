@@ -136,7 +136,7 @@ export default async function CaseDetailPage({
             <CardHeader>
               <CardTitle>{roleLabels[patientCase.nextRole]}</CardTitle>
               <CardDescription>
-                La demo no cambia de sistema: solo muestra la acción que le toca a este rol.
+                La aplicación no cambia de sistema: solo muestra la acción que le toca a este rol.
               </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-6 md:grid-cols-[1fr_0.9fr]">
@@ -182,7 +182,7 @@ export default async function CaseDetailPage({
             <CardHeader>
               <CardTitle>Variables del dataset esperado</CardTitle>
               <CardDescription>
-                Esta maqueta ya usa la estructura de datos del notebook aunque el modelo
+                Esta vista ya usa la estructura de datos del notebook aunque el modelo
                 final todavía no esté implementado.
               </CardDescription>
             </CardHeader>

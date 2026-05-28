@@ -45,7 +45,7 @@ export function CaseCard({ patientCase, palette, guide }: CaseCardProps) {
         <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
           <div className="flex items-center gap-2 text-sm font-medium">
             <HeartPulse className="size-4 text-primary" />
-            Siguiente paso de la demo
+            Siguiente paso sugerido
           </div>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
             {patientCase.guideStep}

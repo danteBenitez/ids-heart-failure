@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { PrototypeHeader } from "@/components/prototype-header";
+import { PageHeader } from "@/components/page-header";
 import { getPalette } from "@/lib/demo-data";
 import { cn } from "@/lib/utils";
 
@@ -26,7 +26,7 @@ export function AppFrame({
       )}
     >
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-6 md:px-6 md:py-8">
-        <PrototypeHeader title={title} subtitle={subtitle} />
+        <PageHeader title={title} subtitle={subtitle} />
         {children}
       </div>
     </div>

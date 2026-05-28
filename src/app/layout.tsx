@@ -18,8 +18,8 @@ const newsreader = Newsreader({
 });
 
 export const metadata: Metadata = {
-  title: "CardioFlow Demo",
-  description: "Maqueta de flujo clínico asistido por riesgo cardiovascular.",
+  title: "CardioFlow",
+  description: "Aplicación para flujo clínico asistido por riesgo cardiovascular.",
 };
 
 export default function RootLayout({

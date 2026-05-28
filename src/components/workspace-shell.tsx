@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getPalette } from "@/lib/demo-data";
 import { cn } from "@/lib/utils";
+import { Suspense } from "react";
 
 type WorkspaceShellProps = {
   children: React.ReactNode;
@@ -60,6 +61,10 @@ const navigation = [
 ];
 
 export function WorkspaceShell({ children }: WorkspaceShellProps) {
+  return <Suspense><WorkspaceShellInner>{children}</WorkspaceShellInner></Suspense>
+}
+
+export function WorkspaceShellInner({ children }: WorkspaceShellProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const paletteId = searchParams.get("palette") ?? "sand";
@@ -164,7 +169,7 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
           <div className="rounded-2xl border border-sidebar-border/70 bg-sidebar-accent/50 p-3 group-data-[collapsible=icon]:hidden">
             <div className="flex items-center justify-between gap-2">
               <p className="text-xs font-medium uppercase tracking-[0.24em] text-sidebar-foreground/70">
-                Demo
+                Estado
               </p>
               <Badge variant="secondary">{guide === "on" ? "Guiada" : "Libre"}</Badge>
             </div>

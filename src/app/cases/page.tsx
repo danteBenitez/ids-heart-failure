@@ -18,7 +18,7 @@ export default async function CasesPage({ searchParams }: CasesPageProps) {
   return (
     <AppFrame
       title="Lista de casos"
-      subtitle="Cada tarjeta representa un estado distinto del flujo clínico. La demo guiada solo destaca uno de ellos."
+      subtitle="Cada tarjeta representa un estado distinto del flujo clínico. La guía solo destaca el siguiente paso recomendado."
       paletteId={palette}
     >
       <GuidePanel
