@@ -141,3 +141,35 @@ export function getDispositionTransition(
     eventTitle: "Resolución cardiológica registrada",
   };
 }
+
+export function getMedicalDispositionTransition(
+  disposition: "Derivar a cardiología" | "Seguimiento clínico" | "Cerrar con control",
+) {
+  if (disposition === "Seguimiento clínico") {
+    return {
+      status: "Seguimiento clínico" as const,
+      nextRole: "medico" as const,
+      currentTask: "Registrar plan de seguimiento clínico y próximos controles.",
+      primaryActionLabel: "Actualizar seguimiento",
+      eventTitle: "Seguimiento clínico definido",
+    };
+  }
+
+  if (disposition === "Cerrar con control") {
+    return {
+      status: "Cerrado" as const,
+      nextRole: "coordinacion" as const,
+      currentTask: "Inspeccionar el historial completo y cómo se cerró el caso.",
+      primaryActionLabel: "Ver cierre",
+      eventTitle: "Caso cerrado con control clínico",
+    };
+  }
+
+  return {
+    status: "Derivado a cardiología" as const,
+    nextRole: "cardiologia" as const,
+    currentTask: "Revisar el score, confirmar la conducta y registrar la resolución clínica.",
+    primaryActionLabel: "Registrar resolución",
+    eventTitle: "Derivación a cardiología indicada",
+  };
+}

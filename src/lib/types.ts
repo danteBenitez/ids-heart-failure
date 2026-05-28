@@ -53,6 +53,8 @@ export type CaseAssessment = {
   insights: string[];
   topFactors: string[];
   recommendedAction?: string;
+  clinicianDisposition?: "Derivar a cardiología" | "Seguimiento clínico" | "Cerrar con control";
+  clinicianNotes?: string;
   hasHeartDisease?: boolean;
   finalDiagnosis?: string;
   specialistNotes?: string;

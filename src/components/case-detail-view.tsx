@@ -49,6 +49,12 @@ export function CaseDetailView({
   const [editableModelInput, setEditableModelInput] = useState<ModelFeaturePayload>(
     patientCase.modelInput,
   );
+  const [clinicianDisposition, setClinicianDisposition] = useState<
+    "" | "Derivar a cardiología" | "Seguimiento clínico" | "Cerrar con control"
+  >(patientCase.assessment.clinicianDisposition ?? "");
+  const [clinicianNotes, setClinicianNotes] = useState(
+    patientCase.assessment.clinicianNotes ?? "",
+  );
   const [hasHeartDisease, setHasHeartDisease] = useState<"" | "true" | "false">(
     typeof patientCase.assessment.hasHeartDisease === "boolean"
       ? String(patientCase.assessment.hasHeartDisease) as "true" | "false"
@@ -124,6 +130,28 @@ export function CaseDetailView({
     }
   }
 
+  async function handleMedicalDisposition(e: React.FormEvent) {
+    e.preventDefault();
+    if (isAdvancing || isClosed || clinicianDisposition === "") return;
+
+    setIsAdvancing(true);
+    try {
+      const transition = patientService.getMedicalDispositionTransition(clinicianDisposition);
+      await patientService.updateAssessment(patientCase.id, {
+        clinicianDisposition,
+        clinicianNotes: clinicianNotes.trim(),
+      });
+      await patientService.advanceStatus(patientCase.id, {
+        ...transition,
+        note: clinicianNotes.trim() || transition.eventTitle,
+      });
+      router.push(`${basePath}?guide=${guide}`);
+    } catch (error) {
+      console.error("Error al registrar la conducta médica:", error);
+      setIsAdvancing(false);
+    }
+  }
+
   function updateEditableModelInput<K extends keyof ModelFeaturePayload>(
     key: K,
     value: ModelFeaturePayload[K],
@@ -188,119 +216,166 @@ export function CaseDetailView({
       </section>
 
       {activeRole === "medico" ? (
-        <section className="grid gap-4 xl:grid-cols-[minmax(0,1.05fr)_minmax(320px,0.95fr)]">
-          <div className={`rounded-2xl border p-5 ${riskTone}`}>
-            <div className="flex items-start justify-between gap-4">
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-muted-foreground">
-                  Probabilidad estimada de enfermedad cardíaca
-                </p>
-                <div className="flex items-end gap-3">
-                  <div className="flex items-center gap-3">
-                    <HeartPulse className={`size-8 ${probabilityTone}`} />
-                    <span
-                      className={`font-heading text-5xl font-semibold tracking-tight ${probabilityTone}`}
+        <>
+          <section className="grid gap-4 xl:grid-cols-[minmax(0,1.05fr)_minmax(320px,0.95fr)]">
+            <div className={`rounded-2xl border p-5 ${riskTone}`}>
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Probabilidad estimada de enfermedad cardíaca
+                  </p>
+                  <div className="flex items-end gap-3">
+                    <div className="flex items-center gap-3">
+                      <HeartPulse className={`size-8 ${probabilityTone}`} />
+                      <span
+                        className={`font-heading text-5xl font-semibold tracking-tight ${probabilityTone}`}
+                      >
+                        {riskPercentage}%
+                      </span>
+                    </div>
+                    <Badge
+                      variant={
+                        patientCase.assessment.riskLevel === "Alto" ? "default" : "secondary"
+                      }
                     >
-                      {riskPercentage}%
-                    </span>
+                      Riesgo {patientCase.assessment.riskLevel}
+                    </Badge>
                   </div>
-                  <Badge
-                    variant={
-                      patientCase.assessment.riskLevel === "Alto" ? "default" : "secondary"
-                    }
-                  >
-                    Riesgo {patientCase.assessment.riskLevel}
-                  </Badge>
+                  <p className="max-w-xl text-sm leading-6 text-muted-foreground">
+                    {patientCase.assessment.clinicalSummary}
+                  </p>
                 </div>
-                <p className="max-w-xl text-sm leading-6 text-muted-foreground">
-                  {patientCase.assessment.clinicalSummary}
-                </p>
-              </div>
-              <TrendingUp className={`mt-1 hidden size-5 shrink-0 md:block ${probabilityTone}`} />
-            </div>
-
-            <div className="mt-5">
-              <div className="mb-2 flex items-center justify-between text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                <span>Escala de riesgo</span>
-                <span>{riskPercentage}%</span>
-              </div>
-              <div className="h-3 overflow-hidden rounded-full bg-background/80">
-                <div
-                  className={`h-full rounded-full ${
-                    patientCase.assessment.riskLevel === "Alto"
-                      ? "bg-red-500"
-                      : patientCase.assessment.riskLevel === "Medio"
-                        ? "bg-amber-500"
-                        : "bg-emerald-500"
-                  }`}
-                  style={{ width: `${riskPercentage}%` }}
+                <TrendingUp
+                  className={`mt-1 hidden size-5 shrink-0 md:block ${probabilityTone}`}
                 />
               </div>
-            </div>
-          </div>
 
-          <div className="rounded-2xl border border-border/70 bg-card/90 p-5">
-            <div className="space-y-4">
-              {(isMedicalFollowUp || isMedicalReevaluation) &&
-              (patientCase.assessment.finalDiagnosis ||
-                patientCase.assessment.specialistNotes ||
-                typeof patientCase.assessment.hasHeartDisease === "boolean") ? (
+              <div className="mt-5">
+                <div className="mb-2 flex items-center justify-between text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  <span>Escala de riesgo</span>
+                  <span>{riskPercentage}%</span>
+                </div>
+                <div className="h-3 overflow-hidden rounded-full bg-background/80">
+                  <div
+                    className={`h-full rounded-full ${
+                      patientCase.assessment.riskLevel === "Alto"
+                        ? "bg-red-500"
+                        : patientCase.assessment.riskLevel === "Medio"
+                          ? "bg-amber-500"
+                          : "bg-emerald-500"
+                    }`}
+                    style={{ width: `${riskPercentage}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-border/70 bg-card/90 p-5">
+              <form onSubmit={handleMedicalDisposition} className="space-y-4">
                 <div className="rounded-xl border border-border/70 bg-background/80 px-4 py-3">
                   <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                    Devolución de cardiología
+                    Conducta sugerida
                   </p>
-                  <div className="mt-3 space-y-3 text-sm">
-                    {typeof patientCase.assessment.hasHeartDisease === "boolean" ? (
-                      <Badge
-                        variant={
-                          patientCase.assessment.hasHeartDisease ? "default" : "secondary"
-                        }
-                      >
-                        {patientCase.assessment.hasHeartDisease
-                          ? "Enfermedad cardíaca presente"
-                          : "Enfermedad cardíaca ausente"}
-                      </Badge>
-                    ) : null}
-                    {patientCase.assessment.finalDiagnosis ? (
-                      <p>{patientCase.assessment.finalDiagnosis}</p>
-                    ) : null}
-                    {patientCase.assessment.specialistNotes ? (
-                      <p className="leading-6 text-muted-foreground">
-                        {patientCase.assessment.specialistNotes}
-                      </p>
-                    ) : null}
+                  <p className="mt-2 text-sm font-medium leading-6">
+                    {patientCase.assessment.recommendedAction ??
+                      "Registrar evaluación clínica y definir conducta."}
+                  </p>
+                </div>
+
+                <div className="rounded-xl border border-border/70 bg-background/80 px-4 py-3">
+                  <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                    Conducta clínica
+                  </p>
+                  <div className="mt-3 grid gap-3">
+                    <select
+                      className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                      value={clinicianDisposition}
+                      onChange={(e) =>
+                        setClinicianDisposition(
+                          e.target.value as
+                            | ""
+                            | "Derivar a cardiología"
+                            | "Seguimiento clínico"
+                            | "Cerrar con control",
+                        )
+                      }
+                    >
+                      <option value="">Seleccionar conducta</option>
+                      <option value="Derivar a cardiología">Derivar a cardiología</option>
+                      <option value="Seguimiento clínico">Seguimiento clínico</option>
+                      <option value="Cerrar con control">Cerrar con control</option>
+                    </select>
+                    <textarea
+                      rows={4}
+                      className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                      placeholder="Registrar criterio clínico, plan o motivo de derivación."
+                      value={clinicianNotes}
+                      onChange={(e) => setClinicianNotes(e.target.value)}
+                    />
+                    <div className="flex flex-wrap gap-3">
+                      <Button type="submit" disabled={isAdvancing || clinicianDisposition === ""}>
+                        {isAdvancing ? (
+                          <Loader2 className="size-4 animate-spin" data-icon="inline-start" />
+                        ) : null}
+                        {patientCase.workflow.primaryActionLabel}
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              ) : null}
-
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Factores principales del resultado
-                </p>
-                <ul className="mt-3 grid gap-2">
-                  {patientCase.assessment.topFactors.map((factor) => (
-                    <li
-                      key={factor}
-                      className="rounded-xl border border-border/70 bg-background/80 px-3 py-2 text-sm"
-                    >
-                      {factor}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="rounded-xl border border-border/70 bg-background/80 px-4 py-3">
-                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                  Conducta sugerida
-                </p>
-                <p className="mt-2 text-sm font-medium leading-6">
-                  {patientCase.assessment.recommendedAction ??
-                    "Registrar evaluación clínica y definir conducta."}
-                </p>
-              </div>
+              </form>
             </div>
-          </div>
-        </section>
+          </section>
+
+          <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(320px,0.9fr)]">
+            {(isMedicalFollowUp || isMedicalReevaluation) &&
+            (patientCase.assessment.finalDiagnosis ||
+              patientCase.assessment.specialistNotes ||
+              typeof patientCase.assessment.hasHeartDisease === "boolean") ? (
+              <div className="rounded-2xl border border-border/70 bg-card/90 p-5">
+                <p className="text-sm font-medium text-muted-foreground">
+                  Devolución de cardiología
+                </p>
+                <div className="mt-4 space-y-3 text-sm">
+                  {typeof patientCase.assessment.hasHeartDisease === "boolean" ? (
+                    <Badge
+                      variant={
+                        patientCase.assessment.hasHeartDisease ? "default" : "secondary"
+                      }
+                    >
+                      {patientCase.assessment.hasHeartDisease
+                        ? "Enfermedad cardíaca presente"
+                        : "Enfermedad cardíaca ausente"}
+                    </Badge>
+                  ) : null}
+                  {patientCase.assessment.finalDiagnosis ? (
+                    <p>{patientCase.assessment.finalDiagnosis}</p>
+                  ) : null}
+                  {patientCase.assessment.specialistNotes ? (
+                    <p className="leading-6 text-muted-foreground">
+                      {patientCase.assessment.specialistNotes}
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
+
+            <div className="rounded-2xl border border-border/70 bg-card/90 p-5">
+              <p className="text-sm font-medium text-muted-foreground">
+                Factores principales del resultado
+              </p>
+              <ul className="mt-4 grid gap-2">
+                {patientCase.assessment.topFactors.map((factor) => (
+                  <li
+                    key={factor}
+                    className="rounded-xl border border-border/70 bg-background/80 px-3 py-2 text-sm"
+                  >
+                    {factor}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </section>
+        </>
       ) : null}
 
       {activeRole === "cardiologia" ? (

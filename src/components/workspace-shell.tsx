@@ -86,6 +86,22 @@ export function WorkspaceShellInner({ children }: WorkspaceShellProps) {
           </div>
         </SidebarHeader>
 
+        <SidebarGroup>
+          <SidebarGroupLabel>Administración</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Dashboard">
+                  <Link href={withParams("/dashboard")}>
+                    <LayoutDashboard />
+                    <span>Tablero</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
         <SidebarContent>
           <SidebarGroup>
             <SidebarGroupLabel>Navegación</SidebarGroupLabel>
@@ -129,29 +145,6 @@ export function WorkspaceShellInner({ children }: WorkspaceShellProps) {
 
           <SidebarSeparator />
 
-          <SidebarGroup>
-            <SidebarGroupLabel>Atajos</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip="Dashboard">
-                    <Link href={withParams("/dashboard")}>
-                      <LayoutDashboard />
-                      <span>Tablero</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip="Inicio">
-                    <Link href={withParams("/dashboard")}>
-                      <ChevronRight />
-                      <span>Resumen</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
         </SidebarContent>
 
       </Sidebar>

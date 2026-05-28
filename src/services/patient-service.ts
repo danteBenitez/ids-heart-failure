@@ -11,6 +11,7 @@ import {
   getCaseActionLabel,
   getCaseGuideStep,
   getDispositionTransition,
+  getMedicalDispositionTransition,
   getNextRole,
   getNextStatus,
   getTransitionEventTitle,
@@ -214,6 +215,7 @@ export const patientService = {
   },
 
   getDispositionTransition,
+  getMedicalDispositionTransition,
 };
 
 function buildRecordNumber() {
