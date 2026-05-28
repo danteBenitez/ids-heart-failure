@@ -17,7 +17,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { PatientCase, RoleKey } from "@/lib/demo-data";
+import type { PatientCase, RoleKey } from "@/lib/types";
+import { getCaseSummary } from "@/lib/case-helpers";
 
 type CaseQueueTableProps = {
   title: string;
@@ -64,9 +65,11 @@ export function CaseQueueTable({
                   <TableCell className="pl-4 align-top">
                     <div className="space-y-1">
                       <p className="font-medium">{patientCase.patient}</p>
-                      <p className="text-xs text-muted-foreground">{patientCase.id}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {patientCase.id.slice(0, 8)}
+                      </p>
                       <p className="max-w-md text-sm leading-6 text-muted-foreground whitespace-normal">
-                        {patientCase.summary}
+                        {getCaseSummary(patientCase.status)}
                       </p>
                     </div>
                   </TableCell>

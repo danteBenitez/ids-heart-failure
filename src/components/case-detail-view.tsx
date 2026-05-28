@@ -1,8 +1,13 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   CheckCircle2,
   FilePenLine,
+  Loader2,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -15,39 +20,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { getFieldLabel, getFieldValueLabel } from "@/lib/clinical-labels";
-import { type CaseEvent, type PatientCase, type RoleKey, roleLabels } from "@/lib/demo-data";
-
-const roleBasePath: Record<RoleKey, string> = {
-  enfermeria: "/dashboard/nursing",
-  medico: "/dashboard/clinical",
-  cardiologia: "/dashboard/cardiology",
-  coordinacion: "/dashboard",
-};
-
-const roleActionCopy: Record<
-  RoleKey,
-  {
-    primaryAction: string;
-    secondaryAction: string;
-  }
-> = {
-  enfermeria: {
-    primaryAction: "Confirmar triaje",
-    secondaryAction: "Guardar borrador",
-  },
-  medico: {
-    primaryAction: "Registrar evaluación",
-    secondaryAction: "Ver explicación del score",
-  },
-  cardiologia: {
-    primaryAction: "Registrar resolución",
-    secondaryAction: "Cerrar caso",
-  },
-  coordinacion: {
-    primaryAction: "Ver cierre",
-    secondaryAction: "Volver al tablero",
-  },
-};
+import type { CaseEvent, PatientCase, RoleKey } from "@/lib/types";
+import {
+  getCaseGuideStep,
+  roleActionCopy,
+  roleBasePath,
+  roleLabels,
+} from "@/lib/case-helpers";
+import { patientService } from "@/services/patient-service";
 
 type CaseDetailViewProps = {
   patientCase: PatientCase;
@@ -60,9 +40,27 @@ export function CaseDetailView({
   activeRole,
   guide,
 }: CaseDetailViewProps) {
+  const router = useRouter();
+  const [isAdvancing, setIsAdvancing] = useState(false);
+
   const nextPendingEvent = patientCase.events.find((event) => !event.completed);
   const roleCopy = roleActionCopy[activeRole];
   const basePath = roleBasePath[activeRole];
+  const guideStep = getCaseGuideStep(activeRole);
+  const isClosed = patientCase.status === "Cerrado";
+
+  async function handleAdvanceStatus() {
+    if (isAdvancing || isClosed) return;
+
+    setIsAdvancing(true);
+    try {
+      await patientService.advanceStatus(patientCase.id);
+      router.push(`${basePath}?guide=${guide}`);
+    } catch (error) {
+      console.error("Error al avanzar el estado del caso:", error);
+      setIsAdvancing(false);
+    }
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -79,10 +77,19 @@ export function CaseDetailView({
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="space-y-1">
             <p className="text-sm font-medium">{roleLabels[activeRole]}</p>
-            <p className="text-sm text-muted-foreground">{patientCase.guideStep}</p>
+            <p className="text-sm text-muted-foreground">{guideStep}</p>
           </div>
           <div className="flex flex-wrap gap-3">
-            <Button>{roleCopy.primaryAction}</Button>
+            {!isClosed ? (
+              <Button onClick={handleAdvanceStatus} disabled={isAdvancing}>
+                {isAdvancing ? (
+                  <Loader2 className="size-4 animate-spin" data-icon="inline-start" />
+                ) : null}
+                {roleCopy.primaryAction}
+              </Button>
+            ) : (
+              <Button disabled>{roleCopy.primaryAction}</Button>
+            )}
             <Button variant="outline">{roleCopy.secondaryAction}</Button>
           </div>
         </div>
@@ -105,7 +112,7 @@ export function CaseDetailView({
                 <div className="space-y-1">
                   <CardTitle className="text-xl">{patientCase.patient}</CardTitle>
                   <CardDescription>
-                    {patientCase.id} · {patientCase.age} años · {patientCase.sex === "F" ? "Femenino" : "Masculino"}
+                    {patientCase.id.slice(0, 8)} · {patientCase.age} años · {patientCase.sex === "F" ? "Femenino" : "Masculino"}
                   </CardDescription>
                 </div>
               </div>
@@ -155,7 +162,7 @@ export function CaseDetailView({
             <div className="grid gap-4 xl:hidden">
               {patientCase.events.map((event, index) => (
                 <TimelineEvent
-                  key={`${event.title}-${index}`}
+                  key={`${event.id}-${index}`}
                   event={event}
                   isCurrent={!event.completed && event === nextPendingEvent}
                   isLast={index === patientCase.events.length - 1}
@@ -166,7 +173,7 @@ export function CaseDetailView({
             <div className="hidden xl:grid xl:grid-cols-[repeat(3,minmax(0,1fr))] xl:gap-4">
               {patientCase.events.map((event, index) => (
                 <HorizontalTimelineEvent
-                  key={`${event.title}-${index}`}
+                  key={`${event.id}-${index}`}
                   event={event}
                   isCurrent={!event.completed && event === nextPendingEvent}
                   isFirst={index === 0}
