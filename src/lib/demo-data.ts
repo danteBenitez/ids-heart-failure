@@ -4,6 +4,8 @@ export type CaseStatus =
   | "Derivado a cardiología"
   | "Cerrado";
 
+export type RiskLevel = "Bajo" | "Medio" | "Alto";
+
 export type RoleKey = "enfermeria" | "medico" | "cardiologia" | "coordinacion";
 
 export type CaseEvent = {
@@ -13,47 +15,60 @@ export type CaseEvent = {
   completed: boolean;
 };
 
-export type PatientCase = {
-  id: string;
-  patient: string;
+export type PatientIdentity = {
+  recordNumber: string;
+  fullName: string;
+  location: string;
+};
+
+export type ModelFeaturePayload = {
   age: number;
   sex: "F" | "M";
+  chestPainType: "TA" | "ATA" | "NAP" | "ASY";
+  restingBP: number;
+  cholesterol: number;
+  fastingBS: 0 | 1;
+  maxHR: number;
+  exerciseAngina: "Sí" | "No";
+  oldpeak: number;
+  restingECG: "Normal" | "ST" | "LVH";
+  stSlope: "Up" | "Flat" | "Down";
+};
+
+export type CaseWorkflow = {
   status: CaseStatus;
-  risk: "Bajo" | "Medio" | "Alto";
   nextRole: RoleKey;
-  location: string;
-  summary: string;
-  guideStep: string;
-  actionLabel: string;
-  vitals: {
-    chestPainType: string;
-    restingBP: number;
-    cholesterol: number;
-    fastingBS: number;
-    maxHR: number;
-    exerciseAngina: "Sí" | "No";
-    oldpeak: number;
-    restingECG: string;
-    stSlope: string;
-  };
+  currentTask: string;
+  primaryActionLabel: string;
+  timeline: CaseEvent[];
+};
+
+export type CaseAssessment = {
+  riskLevel: RiskLevel;
+  riskProbability: number;
+  clinicalSummary: string;
   insights: string[];
-  events: CaseEvent[];
+};
+
+export type PatientCase = {
+  id: string;
+  patient: PatientIdentity;
+  modelInput: ModelFeaturePayload;
+  workflow: CaseWorkflow;
+  assessment: CaseAssessment;
 };
 
 export const patientCases: PatientCase[] = [
   {
     id: "PAC-104",
-    patient: "María Sosa",
-    age: 57,
-    sex: "F",
-    status: "Pendiente de triaje",
-    risk: "Medio",
-    nextRole: "enfermeria",
-    location: "Centro Norte",
-    summary: "Paciente con fatiga y dolor no anginal. Falta completar mediciones.",
-    guideStep: "Registrar mediciones iniciales y confirmar el ingreso del caso.",
-    actionLabel: "Completar triaje",
-    vitals: {
+    patient: {
+      recordNumber: "PAC-104",
+      fullName: "María Sosa",
+      location: "Centro Norte",
+    },
+    modelInput: {
+      age: 57,
+      sex: "F",
       chestPainType: "NAP",
       restingBP: 132,
       cholesterol: 226,
@@ -64,44 +79,52 @@ export const patientCases: PatientCase[] = [
       restingECG: "Normal",
       stSlope: "Up",
     },
-    insights: [
-      "Aún no hay score definitivo porque el caso no terminó la etapa de enfermería.",
-      "La app puede usar validaciones para detectar campos faltantes o inconsistentes.",
-    ],
-    events: [
-      {
-        title: "Caso creado",
-        by: "Recepción",
-        note: "Se abrió un caso preventivo por controles regulares.",
-        completed: true,
-      },
-      {
-        title: "Carga de triaje",
-        by: "Enfermería",
-        note: "Faltan completar mediciones y confirmar el set de datos.",
-        completed: false,
-      },
-      {
-        title: "Evaluación médica",
-        by: "Médico general",
-        note: "Bloqueada hasta confirmar el triaje.",
-        completed: false,
-      },
-    ],
+    workflow: {
+      status: "Pendiente de triaje",
+      nextRole: "enfermeria",
+      currentTask: "Registrar mediciones iniciales y confirmar el ingreso del caso.",
+      primaryActionLabel: "Completar triaje",
+      timeline: [
+        {
+          title: "Caso creado",
+          by: "Recepción",
+          note: "Se abrió un caso preventivo por controles regulares.",
+          completed: true,
+        },
+        {
+          title: "Carga de triaje",
+          by: "Enfermería",
+          note: "Faltan completar mediciones y confirmar el set de datos.",
+          completed: false,
+        },
+        {
+          title: "Evaluación médica",
+          by: "Médico general",
+          note: "Bloqueada hasta confirmar el triaje.",
+          completed: false,
+        },
+      ],
+    },
+    assessment: {
+      riskLevel: "Medio",
+      riskProbability: 0.42,
+      clinicalSummary: "Paciente con fatiga y dolor no anginal. Falta completar mediciones.",
+      insights: [
+        "Aún no hay score definitivo porque el caso no terminó la etapa de enfermería.",
+        "La app puede usar validaciones para detectar campos faltantes o inconsistentes.",
+      ],
+    },
   },
   {
     id: "PAC-271",
-    patient: "Jorge Ferreyra",
-    age: 63,
-    sex: "M",
-    status: "Listo para evaluación",
-    risk: "Alto",
-    nextRole: "medico",
-    location: "Policlínico Oeste",
-    summary: "Caso preparado para consulta médica con factores de riesgo combinados.",
-    guideStep: "Calcular el riesgo y decidir si corresponde seguimiento o derivación.",
-    actionLabel: "Evaluar con el modelo",
-    vitals: {
+    patient: {
+      recordNumber: "PAC-271",
+      fullName: "Jorge Ferreyra",
+      location: "Policlínico Oeste",
+    },
+    modelInput: {
+      age: 63,
+      sex: "M",
       chestPainType: "ASY",
       restingBP: 145,
       cholesterol: 289,
@@ -112,44 +135,53 @@ export const patientCases: PatientCase[] = [
       restingECG: "ST",
       stSlope: "Flat",
     },
-    insights: [
-      "La combinación de dolor asintomático, glucemia alta y baja tolerancia al ejercicio eleva el riesgo.",
-      "Este caso es ideal para mostrar cómo la guía resalta el CTA clínico principal.",
-    ],
-    events: [
-      {
-        title: "Datos iniciales confirmados",
-        by: "Enfermería",
-        note: "Todas las mediciones necesarias quedaron registradas.",
-        completed: true,
-      },
-      {
-        title: "Pendiente de score",
-        by: "Médico general",
-        note: "La app espera la evaluación apoyada por el modelo.",
-        completed: false,
-      },
-      {
-        title: "Derivación",
-        by: "Cardiología",
-        note: "Todavía no iniciada.",
-        completed: false,
-      },
-    ],
+    workflow: {
+      status: "Listo para evaluación",
+      nextRole: "medico",
+      currentTask: "Calcular el riesgo y decidir si corresponde seguimiento o derivación.",
+      primaryActionLabel: "Evaluar con el modelo",
+      timeline: [
+        {
+          title: "Datos iniciales confirmados",
+          by: "Enfermería",
+          note: "Todas las mediciones necesarias quedaron registradas.",
+          completed: true,
+        },
+        {
+          title: "Pendiente de score",
+          by: "Médico general",
+          note: "La app espera la evaluación apoyada por el modelo.",
+          completed: false,
+        },
+        {
+          title: "Derivación",
+          by: "Cardiología",
+          note: "Todavía no iniciada.",
+          completed: false,
+        },
+      ],
+    },
+    assessment: {
+      riskLevel: "Alto",
+      riskProbability: 0.86,
+      clinicalSummary:
+        "Caso preparado para consulta médica con factores de riesgo combinados.",
+      insights: [
+        "La combinación de dolor asintomático, glucemia alta y baja tolerancia al ejercicio eleva el riesgo.",
+        "La evaluación médica decide si el caso requiere derivación especializada.",
+      ],
+    },
   },
   {
     id: "PAC-318",
-    patient: "Elena Acosta",
-    age: 68,
-    sex: "F",
-    status: "Derivado a cardiología",
-    risk: "Alto",
-    nextRole: "cardiologia",
-    location: "Clínica Sur",
-    summary: "Paciente ya priorizada y esperando confirmación del especialista.",
-    guideStep: "Revisar el score, confirmar la conducta y registrar la resolución clínica.",
-    actionLabel: "Registrar resolución",
-    vitals: {
+    patient: {
+      recordNumber: "PAC-318",
+      fullName: "Elena Acosta",
+      location: "Clínica Sur",
+    },
+    modelInput: {
+      age: 68,
+      sex: "F",
       chestPainType: "ATA",
       restingBP: 138,
       cholesterol: 241,
@@ -160,44 +192,53 @@ export const patientCases: PatientCase[] = [
       restingECG: "LVH",
       stSlope: "Flat",
     },
-    insights: [
-      "El score ya fue calculado y la derivación quedó justificada con trazabilidad.",
-      "La vista de cardiología debe recibir el contexto resumido, no repetir toda la carga manual.",
-    ],
-    events: [
-      {
-        title: "Triaje completado",
-        by: "Enfermería",
-        note: "Registro inicial validado.",
-        completed: true,
-      },
-      {
-        title: "Riesgo alto detectado",
-        by: "Médico general",
-        note: "Se deriva a cardiología con score y explicación.",
-        completed: true,
-      },
-      {
-        title: "Consulta especializada",
-        by: "Cardiología",
-        note: "Pendiente de resolución.",
-        completed: false,
-      },
-    ],
+    workflow: {
+      status: "Derivado a cardiología",
+      nextRole: "cardiologia",
+      currentTask: "Revisar el score, confirmar la conducta y registrar la resolución clínica.",
+      primaryActionLabel: "Registrar resolución",
+      timeline: [
+        {
+          title: "Triaje completado",
+          by: "Enfermería",
+          note: "Registro inicial validado.",
+          completed: true,
+        },
+        {
+          title: "Riesgo alto detectado",
+          by: "Médico general",
+          note: "Se deriva a cardiología con score y explicación.",
+          completed: true,
+        },
+        {
+          title: "Consulta especializada",
+          by: "Cardiología",
+          note: "Pendiente de resolución.",
+          completed: false,
+        },
+      ],
+    },
+    assessment: {
+      riskLevel: "Alto",
+      riskProbability: 0.79,
+      clinicalSummary:
+        "Paciente ya priorizada y esperando confirmación del especialista.",
+      insights: [
+        "El score ya fue calculado y la derivación quedó justificada con trazabilidad.",
+        "La vista de cardiología debe recibir el contexto resumido, no repetir toda la carga manual.",
+      ],
+    },
   },
   {
     id: "PAC-402",
-    patient: "Ricardo Vega",
-    age: 52,
-    sex: "M",
-    status: "Cerrado",
-    risk: "Bajo",
-    nextRole: "coordinacion",
-    location: "Hospital Central",
-    summary: "Caso cerrado con seguimiento preventivo y sin derivación.",
-    guideStep: "Inspeccionar el historial completo y cómo se cerró el caso.",
-    actionLabel: "Ver cierre",
-    vitals: {
+    patient: {
+      recordNumber: "PAC-402",
+      fullName: "Ricardo Vega",
+      location: "Hospital Central",
+    },
+    modelInput: {
+      age: 52,
+      sex: "M",
       chestPainType: "TA",
       restingBP: 124,
       cholesterol: 198,
@@ -208,30 +249,41 @@ export const patientCases: PatientCase[] = [
       restingECG: "Normal",
       stSlope: "Up",
     },
-    insights: [
-      "Sirve para mostrar que la app no solo deriva, también documenta casos de bajo riesgo.",
-      "El tablero administrativo puede usar este cierre para métricas de eficiencia y seguimiento.",
-    ],
-    events: [
-      {
-        title: "Triaje completado",
-        by: "Enfermería",
-        note: "Ingreso sin anomalías.",
-        completed: true,
-      },
-      {
-        title: "Evaluación médica",
-        by: "Médico general",
-        note: "Riesgo bajo, se indica control en 90 días.",
-        completed: true,
-      },
-      {
-        title: "Caso cerrado",
-        by: "Coordinación clínica",
-        note: "Se registró el plan preventivo.",
-        completed: true,
-      },
-    ],
+    workflow: {
+      status: "Cerrado",
+      nextRole: "coordinacion",
+      currentTask: "Inspeccionar el historial completo y cómo se cerró el caso.",
+      primaryActionLabel: "Ver cierre",
+      timeline: [
+        {
+          title: "Triaje completado",
+          by: "Enfermería",
+          note: "Ingreso sin anomalías.",
+          completed: true,
+        },
+        {
+          title: "Evaluación médica",
+          by: "Médico general",
+          note: "Riesgo bajo, se indica control en 90 días.",
+          completed: true,
+        },
+        {
+          title: "Caso cerrado",
+          by: "Coordinación clínica",
+          note: "Se registró el plan preventivo.",
+          completed: true,
+        },
+      ],
+    },
+    assessment: {
+      riskLevel: "Bajo",
+      riskProbability: 0.18,
+      clinicalSummary: "Caso cerrado con seguimiento preventivo y sin derivación.",
+      insights: [
+        "Sirve para mostrar que la app no solo deriva, también documenta casos de bajo riesgo.",
+        "El tablero administrativo puede usar este cierre para métricas de eficiencia y seguimiento.",
+      ],
+    },
   },
 ];
 

@@ -28,7 +28,7 @@ export default async function DashboardCaseDetailPage({
     notFound();
   }
 
-  const activeRole = resolveRole(query.role, patientCase.nextRole);
+  const activeRole = resolveRole(query.role, patientCase.workflow.nextRole);
 
   return (
     <CaseDetailView patientCase={patientCase} activeRole={activeRole} guide={guide} />

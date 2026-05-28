@@ -23,39 +23,42 @@ export function CaseCard({ patientCase, guide }: CaseCardProps) {
       <CardHeader>
         <div className="flex items-start justify-between gap-3">
           <div>
-            <CardTitle className="text-lg">{patientCase.patient}</CardTitle>
+            <CardTitle className="text-lg">{patientCase.patient.fullName}</CardTitle>
             <CardDescription>
-              {patientCase.id} · {patientCase.age} años · {patientCase.location}
+              {patientCase.patient.recordNumber} · {patientCase.modelInput.age} años ·{" "}
+              {patientCase.patient.location}
             </CardDescription>
           </div>
-          <Badge variant={patientCase.risk === "Alto" ? "default" : "secondary"}>
-            {patientCase.risk}
+          <Badge
+            variant={patientCase.assessment.riskLevel === "Alto" ? "default" : "secondary"}
+          >
+            {patientCase.assessment.riskLevel}
           </Badge>
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <div className="flex flex-wrap gap-2">
-          <Badge variant="outline">{patientCase.status}</Badge>
-          <Badge variant="outline">{roleLabels[patientCase.nextRole]}</Badge>
+          <Badge variant="outline">{patientCase.workflow.status}</Badge>
+          <Badge variant="outline">{roleLabels[patientCase.workflow.nextRole]}</Badge>
         </div>
         <p className="text-sm leading-6 text-muted-foreground">
-          {patientCase.summary}
+          {patientCase.assessment.clinicalSummary}
         </p>
         <div className="flex items-center justify-between rounded-2xl border border-border/70 bg-background/80 px-4 py-3 text-sm">
           <div className="flex items-center gap-2 font-medium">
             <HeartPulse className="size-4 text-primary" />
-            {patientCase.actionLabel}
+            {patientCase.workflow.primaryActionLabel}
           </div>
           {guide !== "off" ? <Badge>Siguiente</Badge> : null}
         </div>
       </CardContent>
       <CardFooter className="justify-between gap-3">
         <span className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
-          {patientCase.actionLabel}
+          {patientCase.workflow.primaryActionLabel}
         </span>
         <Button asChild size="sm">
           <Link
-            href={`/dashboard/cases/${patientCase.id}?guide=${guide}&role=${patientCase.nextRole}`}
+            href={`/dashboard/cases/${patientCase.id}?guide=${guide}&role=${patientCase.workflow.nextRole}`}
           >
             Abrir caso
             {guide !== "off" ? <ArrowRight data-icon="inline-end" /> : <ArrowUpRight data-icon="inline-end" />}

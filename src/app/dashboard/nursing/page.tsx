@@ -15,8 +15,8 @@ export default async function NursingPage({ searchParams }: NursingPageProps) {
 
   const pendingCases = patientCases.filter(
     (patientCase) =>
-      patientCase.nextRole === "enfermeria" ||
-      patientCase.status === "Pendiente de triaje",
+      patientCase.workflow.nextRole === "enfermeria" ||
+      patientCase.workflow.status === "Pendiente de triaje",
   );
 
   return (

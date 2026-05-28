@@ -14,8 +14,8 @@ export default async function CardiologyPage({
   const guide = typeof params.guide === "string" ? params.guide : "on";
   const referredCases = patientCases.filter(
     (patientCase) =>
-      patientCase.nextRole === "cardiologia" ||
-      patientCase.status === "Derivado a cardiología",
+      patientCase.workflow.nextRole === "cardiologia" ||
+      patientCase.workflow.status === "Derivado a cardiología",
   );
 
   return (

@@ -80,7 +80,7 @@ export function WorkspaceShellInner({ children }: WorkspaceShellProps) {
             <div className="min-w-0 group-data-[collapsible=icon]:hidden">
               <p className="truncate text-sm font-semibold">CardioFlow</p>
               <p className="truncate text-xs text-sidebar-foreground/70">
-                Flujo clínico por rol
+                Sistema de asistencia al diagnóstico
               </p>
             </div>
           </div>

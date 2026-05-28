@@ -12,8 +12,8 @@ export default async function ClinicalPage({ searchParams }: ClinicalPageProps) 
   const guide = typeof params.guide === "string" ? params.guide : "on";
   const clinicalCases = patientCases.filter(
     (patientCase) =>
-      patientCase.nextRole === "medico" ||
-      patientCase.status === "Listo para evaluación",
+      patientCase.workflow.nextRole === "medico" ||
+      patientCase.workflow.status === "Listo para evaluación",
   );
 
   return (

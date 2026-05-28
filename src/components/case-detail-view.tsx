@@ -3,6 +3,7 @@ import {
   ArrowLeft,
   CheckCircle2,
   FilePenLine,
+  HeartPulse,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -60,9 +61,10 @@ export function CaseDetailView({
   activeRole,
   guide,
 }: CaseDetailViewProps) {
-  const nextPendingEvent = patientCase.events.find((event) => !event.completed);
+  const nextPendingEvent = patientCase.workflow.timeline.find((event) => !event.completed);
   const roleCopy = roleActionCopy[activeRole];
   const basePath = roleBasePath[activeRole];
+  const riskPercentage = Math.round(patientCase.assessment.riskProbability * 100);
 
   return (
     <div className="flex flex-col gap-6">
@@ -79,7 +81,7 @@ export function CaseDetailView({
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="space-y-1">
             <p className="text-sm font-medium">{roleLabels[activeRole]}</p>
-            <p className="text-sm text-muted-foreground">{patientCase.guideStep}</p>
+            <p className="text-sm text-muted-foreground">{patientCase.workflow.currentTask}</p>
           </div>
           <div className="flex flex-wrap gap-3">
             <Button>{roleCopy.primaryAction}</Button>
@@ -87,6 +89,37 @@ export function CaseDetailView({
           </div>
         </div>
       </section>
+
+      {activeRole === "medico" ? (
+        <section className="rounded-2xl border border-primary/20 bg-primary/5 p-5">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-muted-foreground">
+                Probabilidad estimada de enfermedad cardíaca
+              </p>
+              <div className="flex items-end gap-3">
+                <div className="flex items-center gap-3">
+                  <HeartPulse className="size-8 text-primary" />
+                  <span className="font-heading text-5xl font-semibold tracking-tight">
+                    {riskPercentage}%
+                  </span>
+                </div>
+                <Badge
+                  variant={
+                    patientCase.assessment.riskLevel === "Alto" ? "default" : "secondary"
+                  }
+                >
+                  Riesgo {patientCase.assessment.riskLevel}
+                </Badge>
+              </div>
+            </div>
+
+            <div className="max-w-sm rounded-2xl border border-primary/20 bg-background/80 px-4 py-3 text-sm leading-6 text-muted-foreground">
+              {patientCase.assessment.clinicalSummary}
+            </div>
+          </div>
+        </section>
+      ) : null}
 
 
       <section className="grid gap-6">
@@ -96,30 +129,35 @@ export function CaseDetailView({
               <div className="flex items-center gap-4">
                 <Avatar className="size-12">
                   <AvatarFallback>
-                    {patientCase.patient
+                    {patientCase.patient.fullName
                       .split(" ")
                       .map((chunk) => chunk[0])
                       .join("")}
                   </AvatarFallback>
                 </Avatar>
                 <div className="space-y-1">
-                  <CardTitle className="text-xl">{patientCase.patient}</CardTitle>
+                  <CardTitle className="text-xl">{patientCase.patient.fullName}</CardTitle>
                   <CardDescription>
-                    {patientCase.id} · {patientCase.age} años · {patientCase.sex === "F" ? "Femenino" : "Masculino"}
+                    {patientCase.patient.recordNumber} · {patientCase.modelInput.age} años ·{" "}
+                    {patientCase.modelInput.sex === "F" ? "Femenino" : "Masculino"}
                   </CardDescription>
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
-                <Badge variant="outline">{patientCase.status}</Badge>
-                <Badge variant={patientCase.risk === "Alto" ? "default" : "secondary"}>
-                  Riesgo {patientCase.risk}
+                <Badge variant="outline">{patientCase.workflow.status}</Badge>
+                <Badge
+                  variant={
+                    patientCase.assessment.riskLevel === "Alto" ? "default" : "secondary"
+                  }
+                >
+                  Riesgo {patientCase.assessment.riskLevel}
                 </Badge>
               </div>
             </div>
           </CardHeader>
           <CardContent className="grid gap-4">
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              {Object.entries(patientCase.vitals).map(([key, value]) => (
+              {Object.entries(patientCase.modelInput).map(([key, value]) => (
                 <div
                   key={key}
                   className="rounded-2xl border border-border/70 bg-background/80 p-4"
@@ -153,30 +191,30 @@ export function CaseDetailView({
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 xl:hidden">
-              {patientCase.events.map((event, index) => (
+              {patientCase.workflow.timeline.map((event, index) => (
                 <TimelineEvent
                   key={`${event.title}-${index}`}
                   event={event}
                   isCurrent={!event.completed && event === nextPendingEvent}
-                  isLast={index === patientCase.events.length - 1}
+                  isLast={index === patientCase.workflow.timeline.length - 1}
                 />
               ))}
             </div>
 
             <div className="hidden xl:grid xl:grid-cols-[repeat(3,minmax(0,1fr))] xl:gap-4">
-              {patientCase.events.map((event, index) => (
+              {patientCase.workflow.timeline.map((event, index) => (
                 <HorizontalTimelineEvent
                   key={`${event.title}-${index}`}
                   event={event}
                   isCurrent={!event.completed && event === nextPendingEvent}
                   isFirst={index === 0}
-                  isLast={index === patientCase.events.length - 1}
+                  isLast={index === patientCase.workflow.timeline.length - 1}
                 />
               ))}
             </div>
 
             <div className="mt-4 hidden xl:flex xl:flex-wrap xl:gap-2">
-              {patientCase.events.map((event, index) => (
+              {patientCase.workflow.timeline.map((event, index) => (
                 <Badge
                   key={`${event.by}-${index}`}
                   variant={!event.completed && event === nextPendingEvent ? "default" : "outline"}

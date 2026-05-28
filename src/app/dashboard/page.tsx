@@ -11,9 +11,11 @@ export default async function DashboardPage({
 }: DashboardPageProps) {
   await searchParams;
 
-  const highRisk = patientCases.filter((patientCase) => patientCase.risk === "Alto").length;
+  const highRisk = patientCases.filter(
+    (patientCase) => patientCase.assessment.riskLevel === "Alto",
+  ).length;
   const pending = patientCases.filter(
-    (patientCase) => patientCase.status !== "Cerrado",
+    (patientCase) => patientCase.workflow.status !== "Cerrado",
   ).length;
 
   return (
@@ -56,10 +58,10 @@ export default async function DashboardPage({
                 className="rounded-2xl border border-border/70 bg-background/80 p-4"
               >
                 <p className="text-sm font-semibold">
-                  {patientCase.patient} · {patientCase.id}
+                  {patientCase.patient.fullName} · {patientCase.patient.recordNumber}
                 </p>
                 <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                  {patientCase.status} · Riesgo {patientCase.risk}
+                  {patientCase.workflow.status} · Riesgo {patientCase.assessment.riskLevel}
                 </p>
               </div>
             ))}
