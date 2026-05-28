@@ -10,7 +10,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { PatientCase, roleLabels } from "@/lib/demo-data";
+import type { PatientCase } from "@/lib/types";
+import { roleLabels } from "@/lib/case-helpers";
 
 type CaseCardProps = {
   patientCase: PatientCase;
@@ -18,6 +19,9 @@ type CaseCardProps = {
 };
 
 export function CaseCard({ patientCase, guide }: CaseCardProps) {
+  const summary = patientCase.assessment.clinicalSummary;
+  const actionLabel = patientCase.workflow.primaryActionLabel;
+
   return (
     <Card className="h-full border-border/70 bg-card/90">
       <CardHeader>
@@ -41,20 +45,18 @@ export function CaseCard({ patientCase, guide }: CaseCardProps) {
           <Badge variant="outline">{patientCase.workflow.status}</Badge>
           <Badge variant="outline">{roleLabels[patientCase.workflow.nextRole]}</Badge>
         </div>
-        <p className="text-sm leading-6 text-muted-foreground">
-          {patientCase.assessment.clinicalSummary}
-        </p>
+        <p className="text-sm leading-6 text-muted-foreground">{summary}</p>
         <div className="flex items-center justify-between rounded-2xl border border-border/70 bg-background/80 px-4 py-3 text-sm">
           <div className="flex items-center gap-2 font-medium">
             <HeartPulse className="size-4 text-primary" />
-            {patientCase.workflow.primaryActionLabel}
+            {actionLabel}
           </div>
           {guide !== "off" ? <Badge>Siguiente</Badge> : null}
         </div>
       </CardContent>
       <CardFooter className="justify-between gap-3">
         <span className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
-          {patientCase.workflow.primaryActionLabel}
+          {actionLabel}
         </span>
         <Button asChild size="sm">
           <Link

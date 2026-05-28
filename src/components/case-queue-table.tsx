@@ -17,7 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { PatientCase, RoleKey } from "@/lib/demo-data";
+import type { PatientCase, RoleKey } from "@/lib/types";
 
 type CaseQueueTableProps = {
   title: string;

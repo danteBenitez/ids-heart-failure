@@ -1,64 +1,8 @@
-export type CaseStatus =
-  | "Pendiente de triaje"
-  | "Listo para evaluación"
-  | "Derivado a cardiología"
-  | "Cerrado";
+import type { PatientCase } from "./types";
 
-export type RiskLevel = "Bajo" | "Medio" | "Alto";
+const seedTimestamp = "2026-05-28T12:00:00.000Z";
 
-export type RoleKey = "enfermeria" | "medico" | "cardiologia" | "coordinacion";
-
-export type CaseEvent = {
-  title: string;
-  by: string;
-  note: string;
-  completed: boolean;
-};
-
-export type PatientIdentity = {
-  recordNumber: string;
-  fullName: string;
-  location: string;
-};
-
-export type ModelFeaturePayload = {
-  age: number;
-  sex: "F" | "M";
-  chestPainType: "TA" | "ATA" | "NAP" | "ASY";
-  restingBP: number;
-  cholesterol: number;
-  fastingBS: 0 | 1;
-  maxHR: number;
-  exerciseAngina: "Sí" | "No";
-  oldpeak: number;
-  restingECG: "Normal" | "ST" | "LVH";
-  stSlope: "Up" | "Flat" | "Down";
-};
-
-export type CaseWorkflow = {
-  status: CaseStatus;
-  nextRole: RoleKey;
-  currentTask: string;
-  primaryActionLabel: string;
-  timeline: CaseEvent[];
-};
-
-export type CaseAssessment = {
-  riskLevel: RiskLevel;
-  riskProbability: number;
-  clinicalSummary: string;
-  insights: string[];
-};
-
-export type PatientCase = {
-  id: string;
-  patient: PatientIdentity;
-  modelInput: ModelFeaturePayload;
-  workflow: CaseWorkflow;
-  assessment: CaseAssessment;
-};
-
-export const patientCases: PatientCase[] = [
+export const seedPatients: PatientCase[] = [
   {
     id: "PAC-104",
     patient: {
@@ -86,22 +30,28 @@ export const patientCases: PatientCase[] = [
       primaryActionLabel: "Completar triaje",
       timeline: [
         {
+          id: "evt-pac-104-1",
           title: "Caso creado",
           by: "Recepción",
           note: "Se abrió un caso preventivo por controles regulares.",
           completed: true,
+          timestamp: seedTimestamp,
         },
         {
+          id: "evt-pac-104-2",
           title: "Carga de triaje",
           by: "Enfermería",
           note: "Faltan completar mediciones y confirmar el set de datos.",
           completed: false,
+          timestamp: seedTimestamp,
         },
         {
+          id: "evt-pac-104-3",
           title: "Evaluación médica",
           by: "Médico general",
           note: "Bloqueada hasta confirmar el triaje.",
           completed: false,
+          timestamp: seedTimestamp,
         },
       ],
     },
@@ -113,6 +63,10 @@ export const patientCases: PatientCase[] = [
         "Aún no hay score definitivo porque el caso no terminó la etapa de enfermería.",
         "La app puede usar validaciones para detectar campos faltantes o inconsistentes.",
       ],
+    },
+    metadata: {
+      createdAt: seedTimestamp,
+      updatedAt: seedTimestamp,
     },
   },
   {
@@ -142,22 +96,28 @@ export const patientCases: PatientCase[] = [
       primaryActionLabel: "Evaluar con el modelo",
       timeline: [
         {
+          id: "evt-pac-271-1",
           title: "Datos iniciales confirmados",
           by: "Enfermería",
           note: "Todas las mediciones necesarias quedaron registradas.",
           completed: true,
+          timestamp: seedTimestamp,
         },
         {
+          id: "evt-pac-271-2",
           title: "Pendiente de score",
           by: "Médico general",
           note: "La app espera la evaluación apoyada por el modelo.",
           completed: false,
+          timestamp: seedTimestamp,
         },
         {
+          id: "evt-pac-271-3",
           title: "Derivación",
           by: "Cardiología",
           note: "Todavía no iniciada.",
           completed: false,
+          timestamp: seedTimestamp,
         },
       ],
     },
@@ -170,6 +130,10 @@ export const patientCases: PatientCase[] = [
         "La combinación de dolor asintomático, glucemia alta y baja tolerancia al ejercicio eleva el riesgo.",
         "La evaluación médica decide si el caso requiere derivación especializada.",
       ],
+    },
+    metadata: {
+      createdAt: seedTimestamp,
+      updatedAt: seedTimestamp,
     },
   },
   {
@@ -199,22 +163,28 @@ export const patientCases: PatientCase[] = [
       primaryActionLabel: "Registrar resolución",
       timeline: [
         {
+          id: "evt-pac-318-1",
           title: "Triaje completado",
           by: "Enfermería",
           note: "Registro inicial validado.",
           completed: true,
+          timestamp: seedTimestamp,
         },
         {
+          id: "evt-pac-318-2",
           title: "Riesgo alto detectado",
           by: "Médico general",
           note: "Se deriva a cardiología con score y explicación.",
           completed: true,
+          timestamp: seedTimestamp,
         },
         {
+          id: "evt-pac-318-3",
           title: "Consulta especializada",
           by: "Cardiología",
           note: "Pendiente de resolución.",
           completed: false,
+          timestamp: seedTimestamp,
         },
       ],
     },
@@ -227,6 +197,10 @@ export const patientCases: PatientCase[] = [
         "El score ya fue calculado y la derivación quedó justificada con trazabilidad.",
         "La vista de cardiología debe recibir el contexto resumido, no repetir toda la carga manual.",
       ],
+    },
+    metadata: {
+      createdAt: seedTimestamp,
+      updatedAt: seedTimestamp,
     },
   },
   {
@@ -256,22 +230,28 @@ export const patientCases: PatientCase[] = [
       primaryActionLabel: "Ver cierre",
       timeline: [
         {
+          id: "evt-pac-402-1",
           title: "Triaje completado",
           by: "Enfermería",
           note: "Ingreso sin anomalías.",
           completed: true,
+          timestamp: seedTimestamp,
         },
         {
+          id: "evt-pac-402-2",
           title: "Evaluación médica",
           by: "Médico general",
           note: "Riesgo bajo, se indica control en 90 días.",
           completed: true,
+          timestamp: seedTimestamp,
         },
         {
+          id: "evt-pac-402-3",
           title: "Caso cerrado",
           by: "Coordinación clínica",
           note: "Se registró el plan preventivo.",
           completed: true,
+          timestamp: seedTimestamp,
         },
       ],
     },
@@ -284,16 +264,9 @@ export const patientCases: PatientCase[] = [
         "El tablero administrativo puede usar este cierre para métricas de eficiencia y seguimiento.",
       ],
     },
+    metadata: {
+      createdAt: seedTimestamp,
+      updatedAt: seedTimestamp,
+    },
   },
 ];
-
-export const roleLabels: Record<RoleKey, string> = {
-  enfermeria: "Enfermería / triaje",
-  medico: "Médico general",
-  cardiologia: "Cardiología",
-  coordinacion: "Coordinación clínica",
-};
-
-export function getCaseById(id: string) {
-  return patientCases.find((patientCase) => patientCase.id === id);
-}

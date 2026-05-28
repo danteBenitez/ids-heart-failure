@@ -1,9 +1,14 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   CheckCircle2,
   FilePenLine,
   HeartPulse,
+  Loader2,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -16,39 +21,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { getFieldLabel, getFieldValueLabel } from "@/lib/clinical-labels";
-import { type CaseEvent, type PatientCase, type RoleKey, roleLabels } from "@/lib/demo-data";
-
-const roleBasePath: Record<RoleKey, string> = {
-  enfermeria: "/dashboard/nursing",
-  medico: "/dashboard/clinical",
-  cardiologia: "/dashboard/cardiology",
-  coordinacion: "/dashboard",
-};
-
-const roleActionCopy: Record<
-  RoleKey,
-  {
-    primaryAction: string;
-    secondaryAction: string;
-  }
-> = {
-  enfermeria: {
-    primaryAction: "Confirmar triaje",
-    secondaryAction: "Guardar borrador",
-  },
-  medico: {
-    primaryAction: "Registrar evaluación",
-    secondaryAction: "Ver explicación del score",
-  },
-  cardiologia: {
-    primaryAction: "Registrar resolución",
-    secondaryAction: "Cerrar caso",
-  },
-  coordinacion: {
-    primaryAction: "Ver cierre",
-    secondaryAction: "Volver al tablero",
-  },
-};
+import type { CaseEvent, PatientCase, RoleKey } from "@/lib/types";
+import { roleActionCopy, roleBasePath, roleLabels } from "@/lib/case-helpers";
+import { patientService } from "@/services/patient-service";
 
 type CaseDetailViewProps = {
   patientCase: PatientCase;
@@ -61,10 +36,26 @@ export function CaseDetailView({
   activeRole,
   guide,
 }: CaseDetailViewProps) {
+  const router = useRouter();
+  const [isAdvancing, setIsAdvancing] = useState(false);
   const nextPendingEvent = patientCase.workflow.timeline.find((event) => !event.completed);
   const roleCopy = roleActionCopy[activeRole];
   const basePath = roleBasePath[activeRole];
   const riskPercentage = Math.round(patientCase.assessment.riskProbability * 100);
+  const isClosed = patientCase.workflow.status === "Cerrado";
+
+  async function handleAdvanceStatus() {
+    if (isAdvancing || isClosed) return;
+
+    setIsAdvancing(true);
+    try {
+      await patientService.advanceStatus(patientCase.id);
+      router.push(`${basePath}?guide=${guide}`);
+    } catch (error) {
+      console.error("Error al avanzar el estado del caso:", error);
+      setIsAdvancing(false);
+    }
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -84,7 +75,16 @@ export function CaseDetailView({
             <p className="text-sm text-muted-foreground">{patientCase.workflow.currentTask}</p>
           </div>
           <div className="flex flex-wrap gap-3">
-            <Button>{roleCopy.primaryAction}</Button>
+            {!isClosed ? (
+              <Button onClick={handleAdvanceStatus} disabled={isAdvancing}>
+                {isAdvancing ? (
+                  <Loader2 className="size-4 animate-spin" data-icon="inline-start" />
+                ) : null}
+                {roleCopy.primaryAction}
+              </Button>
+            ) : (
+              <Button disabled>{roleCopy.primaryAction}</Button>
+            )}
             <Button variant="outline">{roleCopy.secondaryAction}</Button>
           </div>
         </div>
@@ -120,7 +120,6 @@ export function CaseDetailView({
           </div>
         </section>
       ) : null}
-
 
       <section className="grid gap-6">
         <Card className="border-border/70 bg-card/90">
@@ -185,15 +184,13 @@ export function CaseDetailView({
         <Card className="border-border/70 bg-card/90">
           <CardHeader>
             <CardTitle>Línea de tiempo del caso</CardTitle>
-            <CardDescription>
-              Estado del paciente dentro del flujo clínico.
-            </CardDescription>
+            <CardDescription>Estado del paciente dentro del flujo clínico.</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 xl:hidden">
               {patientCase.workflow.timeline.map((event, index) => (
                 <TimelineEvent
-                  key={`${event.title}-${index}`}
+                  key={`${event.id}-${index}`}
                   event={event}
                   isCurrent={!event.completed && event === nextPendingEvent}
                   isLast={index === patientCase.workflow.timeline.length - 1}
@@ -204,7 +201,7 @@ export function CaseDetailView({
             <div className="hidden xl:grid xl:grid-cols-[repeat(3,minmax(0,1fr))] xl:gap-4">
               {patientCase.workflow.timeline.map((event, index) => (
                 <HorizontalTimelineEvent
-                  key={`${event.title}-${index}`}
+                  key={`${event.id}-${index}`}
                   event={event}
                   isCurrent={!event.completed && event === nextPendingEvent}
                   isFirst={index === 0}
@@ -243,12 +240,13 @@ function TimelineEvent({
     <div className="grid grid-cols-[auto_1fr] gap-4">
       <div className="flex flex-col items-center">
         <div
-          className={`flex size-9 items-center justify-center rounded-full border ${event.completed
-            ? "border-primary/30 bg-primary/10 text-primary"
-            : isCurrent
-              ? "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300"
-              : "border-border bg-background text-muted-foreground"
-            }`}
+          className={`flex size-9 items-center justify-center rounded-full border ${
+            event.completed
+              ? "border-primary/30 bg-primary/10 text-primary"
+              : isCurrent
+                ? "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+                : "border-border bg-background text-muted-foreground"
+          }`}
         >
           {event.completed ? (
             <CheckCircle2 className="size-4" />
@@ -260,10 +258,11 @@ function TimelineEvent({
       </div>
 
       <div
-        className={`rounded-2xl border p-4 ${isCurrent
-          ? "border-amber-500/30 bg-amber-500/5"
-          : "border-border/70 bg-background/80"
-          }`}
+        className={`rounded-2xl border p-4 ${
+          isCurrent
+            ? "border-amber-500/30 bg-amber-500/5"
+            : "border-border/70 bg-background/80"
+        }`}
       >
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -303,12 +302,13 @@ function HorizontalTimelineEvent({
           <div className="absolute left-1/2 right-0 top-1/2 h-px -translate-y-1/2 bg-border" />
         ) : null}
         <div
-          className={`relative z-10 flex size-9 items-center justify-center rounded-full border bg-background ${event.completed
-            ? "border-primary/30 bg-primary/10 text-primary"
-            : isCurrent
-              ? "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300"
-              : "border-border text-muted-foreground"
-            }`}
+          className={`relative z-10 flex size-9 items-center justify-center rounded-full border bg-background ${
+            event.completed
+              ? "border-primary/30 bg-primary/10 text-primary"
+              : isCurrent
+                ? "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+                : "border-border text-muted-foreground"
+          }`}
         >
           {event.completed ? (
             <CheckCircle2 className="size-4" />
@@ -319,10 +319,11 @@ function HorizontalTimelineEvent({
       </div>
 
       <div
-        className={`rounded-2xl border p-4 ${isCurrent
-          ? "border-amber-500/30 bg-amber-500/5"
-          : "border-border/70 bg-background/80"
-          }`}
+        className={`rounded-2xl border p-4 ${
+          isCurrent
+            ? "border-amber-500/30 bg-amber-500/5"
+            : "border-border/70 bg-background/80"
+        }`}
       >
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between gap-2">
