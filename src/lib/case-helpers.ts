@@ -8,6 +8,8 @@ export function getCaseSummary(status: CaseStatus): string {
       "Caso preparado para evaluación médica con factores de riesgo registrados.",
     "Derivado a cardiología":
       "Paciente derivado y esperando resolución del especialista.",
+    "Seguimiento clínico":
+      "Caso con resolución especializada y seguimiento clínico pendiente.",
     Cerrado: "Caso cerrado con resolución clínica registrada.",
   };
 
@@ -79,6 +81,7 @@ export function getNextStatus(current: CaseStatus): CaseStatus {
     "Pendiente de triaje": "Listo para evaluación",
     "Listo para evaluación": "Derivado a cardiología",
     "Derivado a cardiología": "Cerrado",
+    "Seguimiento clínico": "Cerrado",
     Cerrado: "Cerrado",
   };
 
@@ -105,4 +108,36 @@ export function getTransitionEventTitle(role: RoleKey): string {
   };
 
   return transitionEventTitles[role];
+}
+
+export function getDispositionTransition(
+  disposition: "Cerrar caso" | "Solicitar seguimiento" | "Reevaluar",
+) {
+  if (disposition === "Solicitar seguimiento") {
+    return {
+      status: "Seguimiento clínico" as const,
+      nextRole: "medico" as const,
+      currentTask: "Revisar la resolución cardiológica y definir el plan de seguimiento.",
+      primaryActionLabel: "Registrar seguimiento",
+      eventTitle: "Seguimiento clínico solicitado",
+    };
+  }
+
+  if (disposition === "Reevaluar") {
+    return {
+      status: "Listo para evaluación" as const,
+      nextRole: "medico" as const,
+      currentTask: "Reevaluar el caso con la devolución de cardiología.",
+      primaryActionLabel: "Registrar reevaluación",
+      eventTitle: "Caso devuelto para reevaluación clínica",
+    };
+  }
+
+  return {
+    status: "Cerrado" as const,
+    nextRole: "coordinacion" as const,
+    currentTask: "Inspeccionar el historial completo y cómo se cerró el caso.",
+    primaryActionLabel: "Ver cierre",
+    eventTitle: "Resolución cardiológica registrada",
+  };
 }

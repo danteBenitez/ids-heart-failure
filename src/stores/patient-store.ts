@@ -30,6 +30,8 @@ type PatientActions = {
   _addPatient: (patient: PatientCase) => void;
   /** Reemplaza un paciente existente por ID. */
   _replacePatient: (id: string, patient: PatientCase) => void;
+  /** Marca la store después de la hidratación. */
+  _setIsHydrated: (hydrated: boolean) => void;
 };
 
 export type PatientStore = PatientState & PatientActions;
@@ -40,11 +42,12 @@ export const usePatientStore = create<PatientStore>()(
   persist(
     (set) => ({
       // ── Estado inicial (SSR y antes de hidratación) ──────────────
-      patients: [],
+      patients: seedPatients,
       isHydrated: false,
 
       // ── Acciones internas ────────────────────────────────────────
       _setPatients: (patients) => set({ patients }),
+      _setIsHydrated: (hydrated: boolean) => set({ isHydrated: hydrated }),
 
       _addPatient: (patient) =>
         set((state) => ({ patients: [...state.patients, patient] })),
@@ -75,17 +78,21 @@ export const usePatientStore = create<PatientStore>()(
             );
           }
 
+          if (!_state) {
+            return;
+          }
+
           // Después de que persist haya mergeado, revisamos el estado real
-          const { patients } = usePatientStore.getState();
+          const { patients } = _state;
 
           if (patients.length === 0) {
             // localStorage estaba vacío → cargar datos semilla
-            usePatientStore.setState({ patients: seedPatients });
+            _state._setPatients(seedPatients);
           }
 
           // Marcar como hidratado para que los componentes dejen de
           // mostrar el skeleton y rendericen los datos reales.
-          usePatientStore.setState({ isHydrated: true });
+          _state._setIsHydrated(true);
         };
       },
     },

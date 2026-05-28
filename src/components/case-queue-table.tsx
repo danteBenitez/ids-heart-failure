@@ -91,7 +91,7 @@ export function CaseQueueTable({
                   <TableCell>
                     <Button asChild variant="outline" size="sm">
                       <Link href={`/dashboard/cases/${patientCase.id}?guide=${guide}&role=${role}`}>
-                        Abrir caso
+                        {getRowActionLabel(patientCase, role)}
                       </Link>
                     </Button>
                   </TableCell>
@@ -103,4 +103,12 @@ export function CaseQueueTable({
       </CardContent>
     </Card>
   );
+}
+
+function getRowActionLabel(patientCase: PatientCase, role: RoleKey) {
+  if (role === "medico") {
+    return patientCase.workflow.primaryActionLabel;
+  }
+
+  return "Abrir caso";
 }

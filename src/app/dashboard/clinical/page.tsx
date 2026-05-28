@@ -25,39 +25,46 @@ export default function ClinicalPage() {
   const clinicalCases = patients.filter(
     (p) =>
       p.workflow.nextRole === "medico" ||
-      p.workflow.status === "Listo para evaluación",
+      p.workflow.status === "Listo para evaluación" ||
+      p.workflow.status === "Seguimiento clínico",
   );
+  const followUpCases = clinicalCases.filter(
+    (p) =>
+      p.workflow.status === "Seguimiento clínico" ||
+      p.workflow.primaryActionLabel.toLowerCase().includes("reevalu"),
+  );
+  const initialEvaluationCases = clinicalCases.length - followUpCases.length;
 
   return (
     <div className="flex flex-col gap-6">
       <RoleDashboardSummary
         title="Médico clínico"
-        description="Casos listos para evaluación, priorización y definición de conducta."
+        description="Bandeja clínica para evaluación inicial, reevaluación y seguimiento posterior."
         metrics={[
           {
             icon: FileHeart,
-            label: "Listos para evaluar",
-            value: String(clinicalCases.length),
-            note: "Pacientes con triaje suficiente para revisión clínica.",
+            label: "Evaluación inicial",
+            value: String(initialEvaluationCases),
+            note: "Casos listos para score y definición de conducta inicial.",
           },
           {
             icon: Activity,
-            label: "Acción principal",
-            value: "Registrar evaluación",
-            note: "El score apoya la decisión, pero la conducta queda a cargo del médico.",
+            label: "Seguimiento / reevaluación",
+            value: String(followUpCases.length),
+            note: "Casos devueltos por cardiología o con control clínico pendiente.",
           },
           {
             icon: ArrowUpRight,
-            label: "Siguiente transición",
+            label: "Escalamiento",
             value: "Cardiología",
-            note: "Solo los casos priorizados avanzan a derivación especializada.",
+            note: "Los casos priorizados siguen el circuito de derivación especializada.",
           },
         ]}
       />
 
       <CaseQueueTable
         title="Casos pendientes"
-        description="Pacientes listos para evaluación clínica."
+        description="Pacientes para evaluación inicial, reevaluación o seguimiento."
         cases={clinicalCases}
         role="medico"
         guide={guide}

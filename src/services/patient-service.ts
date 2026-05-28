@@ -1,18 +1,30 @@
 import { usePatientStore } from "@/stores/patient-store";
 import type {
+  CaseStatus,
   CreatePatientInput,
   PatientCase,
   RoleKey,
+  UpdateAssessmentInput,
   UpdateModelInput,
 } from "@/lib/types";
 import {
   getCaseActionLabel,
   getCaseGuideStep,
+  getDispositionTransition,
   getNextRole,
   getNextStatus,
   getTransitionEventTitle,
   roleLabels,
 } from "@/lib/case-helpers";
+
+type AdvanceStatusOptions = {
+  eventTitle?: string;
+  nextRole?: RoleKey;
+  nextStatus?: CaseStatus;
+  currentTask?: string;
+  primaryActionLabel?: string;
+  note?: string;
+};
 
 export const patientService = {
   async getAll(): Promise<PatientCase[]> {
@@ -24,11 +36,11 @@ export const patientService = {
   },
 
   async getByRole(role: RoleKey): Promise<PatientCase[]> {
-    const targetStatus = getStatusForRole(role);
+    const targetStatuses = getStatusesForRole(role);
     return usePatientStore
       .getState()
       .patients.filter(
-        (p) => p.workflow.nextRole === role || p.workflow.status === targetStatus,
+        (p) => p.workflow.nextRole === role || targetStatuses.includes(p.workflow.status),
       );
   },
 
@@ -80,6 +92,8 @@ export const patientService = {
         clinicalSummary:
           input.assessment?.clinicalSummary ?? "Caso creado y pendiente de triaje.",
         insights: input.assessment?.insights ?? [],
+        topFactors: input.assessment?.topFactors ?? [],
+        recommendedAction: input.assessment?.recommendedAction,
       },
       metadata: {
         createdAt: now,
@@ -91,7 +105,7 @@ export const patientService = {
     return patient;
   },
 
-  async advanceStatus(id: string, note?: string): Promise<PatientCase> {
+  async advanceStatus(id: string, options?: string | AdvanceStatusOptions): Promise<PatientCase> {
     const store = usePatientStore.getState();
     const patient = store.patients.find((p) => p.id === id);
 
@@ -100,11 +114,13 @@ export const patientService = {
       throw new Error(`El caso "${patient.patient.fullName}" ya está cerrado.`);
     }
 
+    const normalizedOptions =
+      typeof options === "string" ? { note: options } : (options ?? {});
     const now = new Date().toISOString();
     const currentRole = patient.workflow.nextRole;
-    const newStatus = getNextStatus(patient.workflow.status);
-    const newRole = getNextRole(currentRole);
-    const eventTitle = getTransitionEventTitle(currentRole);
+    const newStatus = normalizedOptions.nextStatus ?? getNextStatus(patient.workflow.status);
+    const newRole = normalizedOptions.nextRole ?? getNextRole(currentRole);
+    const eventTitle = normalizedOptions.eventTitle ?? getTransitionEventTitle(currentRole);
     const eventBy = roleLabels[currentRole];
 
     let markedPending = false;
@@ -116,7 +132,7 @@ export const patientService = {
           title: eventTitle,
           completed: true,
           timestamp: now,
-          note: note || event.note,
+          note: normalizedOptions.note || event.note,
         };
       }
       return event;
@@ -127,7 +143,7 @@ export const patientService = {
         id: crypto.randomUUID(),
         title: eventTitle,
         by: eventBy,
-        note: note || `${eventTitle} por ${eventBy}.`,
+        note: normalizedOptions.note || `${eventTitle} por ${eventBy}.`,
         completed: true,
         timestamp: now,
       });
@@ -139,8 +155,8 @@ export const patientService = {
         ...patient.workflow,
         status: newStatus,
         nextRole: newRole,
-        currentTask: getCaseGuideStep(newRole),
-        primaryActionLabel: getCaseActionLabel(newRole),
+        currentTask: normalizedOptions.currentTask ?? getCaseGuideStep(newRole),
+        primaryActionLabel: normalizedOptions.primaryActionLabel ?? getCaseActionLabel(newRole),
         timeline: updatedTimeline,
       },
       metadata: {
@@ -174,18 +190,42 @@ export const patientService = {
     store._replacePatient(id, updatedCase);
     return updatedCase;
   },
+
+  async updateAssessment(id: string, input: UpdateAssessmentInput): Promise<PatientCase> {
+    const store = usePatientStore.getState();
+    const patient = store.patients.find((p) => p.id === id);
+
+    if (!patient) throw new Error(`Paciente con id "${id}" no encontrado.`);
+
+    const updatedCase: PatientCase = {
+      ...patient,
+      assessment: {
+        ...patient.assessment,
+        ...input,
+      },
+      metadata: {
+        ...patient.metadata,
+        updatedAt: new Date().toISOString(),
+      },
+    };
+
+    store._replacePatient(id, updatedCase);
+    return updatedCase;
+  },
+
+  getDispositionTransition,
 };
 
 function buildRecordNumber() {
   return `PAC-${Math.floor(100 + Math.random() * 900)}`;
 }
 
-function getStatusForRole(role: RoleKey) {
+function getStatusesForRole(role: RoleKey) {
   const statusByRole = {
-    enfermeria: "Pendiente de triaje",
-    medico: "Listo para evaluación",
-    cardiologia: "Derivado a cardiología",
-    coordinacion: "Cerrado",
+    enfermeria: ["Pendiente de triaje"],
+    medico: ["Listo para evaluación", "Seguimiento clínico"],
+    cardiologia: ["Derivado a cardiología"],
+    coordinacion: ["Cerrado"],
   } as const;
 
   return statusByRole[role];
