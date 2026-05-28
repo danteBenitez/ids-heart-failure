@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowUpRight, HeartPulse } from "lucide-react";
+import { ArrowRight, ArrowUpRight, HeartPulse } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,11 +14,10 @@ import { PatientCase, roleLabels } from "@/lib/demo-data";
 
 type CaseCardProps = {
   patientCase: PatientCase;
-  palette: string;
   guide: string;
 };
 
-export function CaseCard({ patientCase, palette, guide }: CaseCardProps) {
+export function CaseCard({ patientCase, guide }: CaseCardProps) {
   return (
     <Card className="h-full border-border/70 bg-card/90">
       <CardHeader>
@@ -42,14 +41,12 @@ export function CaseCard({ patientCase, palette, guide }: CaseCardProps) {
         <p className="text-sm leading-6 text-muted-foreground">
           {patientCase.summary}
         </p>
-        <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
-          <div className="flex items-center gap-2 text-sm font-medium">
+        <div className="flex items-center justify-between rounded-2xl border border-border/70 bg-background/80 px-4 py-3 text-sm">
+          <div className="flex items-center gap-2 font-medium">
             <HeartPulse className="size-4 text-primary" />
-            Siguiente paso sugerido
+            {patientCase.actionLabel}
           </div>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            {patientCase.guideStep}
-          </p>
+          {guide !== "off" ? <Badge>Siguiente</Badge> : null}
         </div>
       </CardContent>
       <CardFooter className="justify-between gap-3">
@@ -57,9 +54,11 @@ export function CaseCard({ patientCase, palette, guide }: CaseCardProps) {
           {patientCase.actionLabel}
         </span>
         <Button asChild size="sm">
-          <Link href={`/cases/${patientCase.id}?palette=${palette}&guide=${guide}`}>
+          <Link
+            href={`/dashboard/cases/${patientCase.id}?guide=${guide}&role=${patientCase.nextRole}`}
+          >
             Abrir caso
-            <ArrowUpRight data-icon="inline-end" />
+            {guide !== "off" ? <ArrowRight data-icon="inline-end" /> : <ArrowUpRight data-icon="inline-end" />}
           </Link>
         </Button>
       </CardFooter>

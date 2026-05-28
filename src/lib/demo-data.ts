@@ -40,34 +40,6 @@ export type PatientCase = {
   events: CaseEvent[];
 };
 
-export type Palette = {
-  id: string;
-  name: string;
-  className: string;
-  accent: string;
-};
-
-export const palettes: Palette[] = [
-  {
-    id: "sand",
-    name: "Arena clínica",
-    className: "theme-sand",
-    accent: "Cálida y sobria",
-  },
-  {
-    id: "mint",
-    name: "Menta hospitalaria",
-    className: "theme-mint",
-    accent: "Más tecnológica",
-  },
-  {
-    id: "sunset",
-    name: "Coral de guardia",
-    className: "theme-sunset",
-    accent: "Más expresiva",
-  },
-];
-
 export const patientCases: PatientCase[] = [
   {
     id: "PAC-104",
@@ -272,8 +244,4 @@ export const roleLabels: Record<RoleKey, string> = {
 
 export function getCaseById(id: string) {
   return patientCases.find((patientCase) => patientCase.id === id);
-}
-
-export function getPalette(id?: string) {
-  return palettes.find((palette) => palette.id === id) ?? palettes[0];
 }

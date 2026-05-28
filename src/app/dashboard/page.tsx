@@ -9,8 +9,7 @@ type DashboardPageProps = {
 export default async function DashboardPage({
   searchParams,
 }: DashboardPageProps) {
-  const params = (await searchParams) ?? {};
-  const palette = typeof params.palette === "string" ? params.palette : undefined;
+  await searchParams;
 
   const highRisk = patientCases.filter((patientCase) => patientCase.risk === "Alto").length;
   const pending = patientCases.filter(
@@ -21,7 +20,6 @@ export default async function DashboardPage({
     <AppFrame
       title="Tablero general"
       subtitle="Vista operativa liviana para mostrar el valor de coordinación sin salir del relato clínico principal."
-      paletteId={palette}
     >
       <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
         <Metric title="Casos activos" value={String(pending)} note="Aún requieren intervención clínica." />

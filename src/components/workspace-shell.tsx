@@ -1,22 +1,19 @@
 "use client";
 
 import Link from "next/link";
+import { Suspense } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import {
   ActivitySquare,
   ChevronRight,
   HeartPulse,
   LayoutDashboard,
-  PlusCircle,
   Stethoscope,
   UserRoundPlus,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -29,13 +26,10 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
   SidebarProvider,
-  SidebarRail,
   SidebarSeparator,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { getPalette } from "@/lib/demo-data";
-import { cn } from "@/lib/utils";
-import { Suspense } from "react";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 type WorkspaceShellProps = {
   children: React.ReactNode;
@@ -67,25 +61,20 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
 export function WorkspaceShellInner({ children }: WorkspaceShellProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const paletteId = searchParams.get("palette") ?? "sand";
   const guide = searchParams.get("guide") ?? "on";
-  const palette = getPalette(paletteId);
 
   function withParams(href: string) {
     const params = new URLSearchParams(searchParams.toString());
-    params.set("palette", paletteId);
     params.set("guide", guide);
     return `${href}?${params.toString()}`;
   }
 
   return (
-    <SidebarProvider
-      className={cn(palette.className, "min-h-screen bg-background text-foreground")}
-    >
+    <SidebarProvider className="min-h-screen bg-background text-foreground">
       <Sidebar variant="inset" collapsible="icon">
         <SidebarHeader>
-          <div className="flex items-center gap-3 rounded-2xl border border-sidebar-border/70 bg-sidebar-accent/60 p-3">
-            <div className="flex size-10 items-center justify-center rounded-xl bg-sidebar-primary text-sidebar-primary-foreground">
+          <div className="flex items-center gap-3 rounded-2xl">
+            <div className="flex items-center justify-center rounded-xl bg-sidebar-primary text-sidebar-primary-foreground aspect-square size-10">
               <ActivitySquare className="size-5" />
             </div>
             <div className="min-w-0 group-data-[collapsible=icon]:hidden">
@@ -165,27 +154,6 @@ export function WorkspaceShellInner({ children }: WorkspaceShellProps) {
           </SidebarGroup>
         </SidebarContent>
 
-        <SidebarFooter>
-          <div className="rounded-2xl border border-sidebar-border/70 bg-sidebar-accent/50 p-3 group-data-[collapsible=icon]:hidden">
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-xs font-medium uppercase tracking-[0.24em] text-sidebar-foreground/70">
-                Estado
-              </p>
-              <Badge variant="secondary">{guide === "on" ? "Guiada" : "Libre"}</Badge>
-            </div>
-            <p className="mt-2 text-sm leading-6 text-sidebar-foreground/80">
-              Cada rol entra por su propia bandeja y luego accede al mismo caso con
-              acciones diferentes.
-            </p>
-            <Button asChild size="sm" className="mt-3 w-full justify-between">
-              <Link href={withParams("/dashboard/nursing/new")}>
-                Nuevo paciente
-                <PlusCircle data-icon="inline-end" />
-              </Link>
-            </Button>
-          </div>
-        </SidebarFooter>
-        <SidebarRail />
       </Sidebar>
 
       <SidebarInset>
@@ -195,14 +163,14 @@ export function WorkspaceShellInner({ children }: WorkspaceShellProps) {
               <SidebarTrigger />
               <div>
                 <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
-                  App operativa
+                  CardioFlow
                 </p>
                 <p className="text-sm font-medium">
-                  Bandejas por rol + detalle compartido del caso
+                  Seguimiento clínico de pacientes
                 </p>
               </div>
             </div>
-            <Badge variant="outline">{palette.name}</Badge>
+            <ThemeToggle />
           </div>
         </header>
         <div className="flex-1 px-4 py-6 md:px-6 md:py-8">{children}</div>

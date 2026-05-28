@@ -1,35 +1,55 @@
-import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Activity, ArrowUpRight, FileHeart } from "lucide-react";
+import { CaseQueueTable } from "@/components/case-queue-table";
+import { RoleDashboardSummary } from "@/components/role-dashboard-summary";
+import { patientCases } from "@/lib/demo-data";
 
-export default function ClinicalPage() {
+type ClinicalPageProps = {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export default async function ClinicalPage({ searchParams }: ClinicalPageProps) {
+  const params = (await searchParams) ?? {};
+  const guide = typeof params.guide === "string" ? params.guide : "on";
+  const clinicalCases = patientCases.filter(
+    (patientCase) =>
+      patientCase.nextRole === "medico" ||
+      patientCase.status === "Listo para evaluación",
+  );
+
   return (
     <div className="flex flex-col gap-6">
-      <Card className="border-border/70 bg-card/90">
-        <CardHeader>
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="outline">Ruta: `/dashboard/clinical`</Badge>
-            <Badge variant="outline">Bandeja de rol</Badge>
-          </div>
-          <CardTitle className="text-3xl">Médico clínico</CardTitle>
-          <CardDescription className="max-w-2xl text-sm leading-6">
-            Esta bandeja recibirá casos con datos ya cargados y listos para
-            evaluación. El siguiente paso es mostrar score, explicación y decisión de
-            derivación.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="rounded-2xl border border-dashed border-border bg-background/60 p-6 text-sm leading-6 text-muted-foreground">
-            Placeholder de la bandeja médica. Acá debería entrar un caso completo
-            desde enfermería, pero todavía sin diagnóstico ni resolución final.
-          </div>
-        </CardContent>
-      </Card>
+      <RoleDashboardSummary
+        title="Médico clínico"
+        description="Casos listos para evaluación, priorización y definición de conducta."
+        metrics={[
+          {
+            icon: FileHeart,
+            label: "Listos para evaluar",
+            value: String(clinicalCases.length),
+            note: "Pacientes con triaje suficiente para revisión clínica.",
+          },
+          {
+            icon: Activity,
+            label: "Acción principal",
+            value: "Registrar evaluación",
+            note: "El score apoya la decisión, pero la conducta queda a cargo del médico.",
+          },
+          {
+            icon: ArrowUpRight,
+            label: "Siguiente transición",
+            value: "Cardiología",
+            note: "Solo los casos priorizados avanzan a derivación especializada.",
+          },
+        ]}
+      />
+
+      <CaseQueueTable
+        title="Casos pendientes"
+        description="Pacientes listos para evaluación clínica."
+        cases={clinicalCases}
+        role="medico"
+        guide={guide}
+      />
     </div>
   );
 }

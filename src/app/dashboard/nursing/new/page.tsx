@@ -1,4 +1,3 @@
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -8,57 +7,30 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { fieldValueLabels } from "@/lib/clinical-labels";
 
 export default function NewNursingPatientPage() {
   return (
     <div className="flex flex-col gap-6">
-      <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-        <Card className="border-border/70 bg-card/90">
-          <CardHeader>
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="outline">Ruta: `/dashboard/nursing/new`</Badge>
-              <Badge variant="outline">Pantalla operativa</Badge>
-            </div>
-            <CardTitle className="text-3xl">Nuevo paciente</CardTitle>
-            <CardDescription className="max-w-2xl text-sm leading-6">
-              Formulario inicial para que enfermería cree un caso clínico. Toma los
-              campos base del dataset del notebook y los organiza como captura usable
-              para personas reales.
-            </CardDescription>
-          </CardHeader>
-        </Card>
-
-        <Card className="border-border/70 bg-card/90">
-          <CardHeader>
-            <CardTitle>Comportamiento esperado</CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-3 text-sm leading-6 text-muted-foreground">
-            <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
-              Al guardar, se crea un caso en estado <strong>Pendiente de evaluación</strong>.
-            </div>
-            <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
-              El siguiente rol esperado pasa a ser <strong>Médico clínico</strong>.
-            </div>
-            <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
-              Si faltan datos críticos, el caso debería quedar en revisión de enfermería.
-            </div>
-          </CardContent>
-        </Card>
-      </section>
+      <Card className="border-border/70 bg-card/90">
+        <CardHeader>
+          <CardTitle className="text-3xl">Nuevo paciente</CardTitle>
+          <CardDescription className="max-w-2xl text-sm leading-6">
+            Alta clínica inicial y registro del ingreso.
+          </CardDescription>
+        </CardHeader>
+      </Card>
 
       <Card className="border-border/70 bg-card/90">
         <CardHeader>
-          <CardTitle>Formulario clínico inicial</CardTitle>
-          <CardDescription>
-            Primera versión de la captura. Más adelante podemos convertir esto en un
-            estado real con validaciones, guardado y redirección al detalle del caso.
-          </CardDescription>
+          <CardTitle>Ingreso del paciente</CardTitle>
+          <CardDescription>Datos personales, motivo de consulta, mediciones y observaciones.</CardDescription>
         </CardHeader>
         <CardContent>
           <form className="grid gap-6">
-            <section className="grid gap-4">
-              <SectionTitle title="Identificación del paciente" />
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <section className="rounded-2xl border border-border/70 bg-background/70 p-5">
+              <SectionTitle title="Identificación" />
+              <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                 <Field label="Nombre">
                   <Input placeholder="María" />
                 </Field>
@@ -71,27 +43,43 @@ export default function NewNursingPatientPage() {
                 <Field label="Sexo">
                   <select className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50">
                     <option>Seleccionar</option>
-                    <option>F</option>
-                    <option>M</option>
+                    <option value="F">{fieldValueLabels.sex.F}</option>
+                    <option value="M">{fieldValueLabels.sex.M}</option>
                   </select>
                 </Field>
               </div>
             </section>
 
-            <section className="grid gap-4">
-              <SectionTitle title="Variables del modelo" />
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <section className="rounded-2xl border border-border/70 bg-background/70 p-5">
+              <SectionTitle title="Motivo de consulta" />
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
                 <Field label="Tipo de dolor de pecho">
                   <select className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50">
                     <option>Seleccionar</option>
-                    <option>TA</option>
-                    <option>ATA</option>
-                    <option>NAP</option>
-                    <option>ASY</option>
+                    <option value="TA">{fieldValueLabels.chestPainType.TA}</option>
+                    <option value="ATA">{fieldValueLabels.chestPainType.ATA}</option>
+                    <option value="NAP">{fieldValueLabels.chestPainType.NAP}</option>
+                    <option value="ASY">{fieldValueLabels.chestPainType.ASY}</option>
                   </select>
                 </Field>
+                <Field label="Angina por ejercicio">
+                  <select className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50">
+                    <option>Seleccionar</option>
+                    <option value="N">{fieldValueLabels.exerciseAngina.N}</option>
+                    <option value="Y">{fieldValueLabels.exerciseAngina.Y}</option>
+                  </select>
+                </Field>
+              </div>
+            </section>
+
+            <section className="rounded-2xl border border-border/70 bg-background/70 p-5">
+              <SectionTitle title="Signos y mediciones" />
+              <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                 <Field label="Presión en reposo (mm Hg)">
                   <Input type="number" placeholder="132" />
+                </Field>
+                <Field label="Frecuencia máxima">
+                  <Input type="number" placeholder="148" />
                 </Field>
                 <Field label="Colesterol (mg/dl)">
                   <Input type="number" placeholder="226" />
@@ -99,26 +87,22 @@ export default function NewNursingPatientPage() {
                 <Field label="Glucemia en ayunas">
                   <select className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50">
                     <option>Seleccionar</option>
-                    <option value="0">Menor o igual a 120 mg/dl</option>
-                    <option value="1">Mayor a 120 mg/dl</option>
+                    <option value="0">{fieldValueLabels.fastingBS[0]}</option>
+                    <option value="1">{fieldValueLabels.fastingBS[1]}</option>
                   </select>
                 </Field>
+              </div>
+            </section>
+
+            <section className="rounded-2xl border border-border/70 bg-background/70 p-5">
+              <SectionTitle title="Pruebas complementarias" />
+              <div className="mt-4 grid gap-4 md:grid-cols-3">
                 <Field label="ECG en reposo">
                   <select className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50">
                     <option>Seleccionar</option>
-                    <option>Normal</option>
-                    <option>ST</option>
-                    <option>LVH</option>
-                  </select>
-                </Field>
-                <Field label="Frecuencia máxima">
-                  <Input type="number" placeholder="148" />
-                </Field>
-                <Field label="Angina por ejercicio">
-                  <select className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50">
-                    <option>Seleccionar</option>
-                    <option>No</option>
-                    <option>Sí</option>
+                    <option value="Normal">{fieldValueLabels.restingECG.Normal}</option>
+                    <option value="ST">{fieldValueLabels.restingECG.ST}</option>
+                    <option value="LVH">{fieldValueLabels.restingECG.LVH}</option>
                   </select>
                 </Field>
                 <Field label="Oldpeak">
@@ -127,17 +111,17 @@ export default function NewNursingPatientPage() {
                 <Field label="Pendiente ST">
                   <select className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50">
                     <option>Seleccionar</option>
-                    <option>Up</option>
-                    <option>Flat</option>
-                    <option>Down</option>
+                    <option value="Up">{fieldValueLabels.stSlope.Up}</option>
+                    <option value="Flat">{fieldValueLabels.stSlope.Flat}</option>
+                    <option value="Down">{fieldValueLabels.stSlope.Down}</option>
                   </select>
                 </Field>
               </div>
             </section>
 
-            <section className="grid gap-4">
+            <section className="rounded-2xl border border-border/70 bg-background/70 p-5">
               <SectionTitle title="Observaciones" />
-              <label className="grid gap-2">
+              <label className="mt-4 grid gap-2">
                 <span className="text-sm font-medium">Notas del ingreso</span>
                 <textarea
                   rows={5}
@@ -164,7 +148,6 @@ function SectionTitle({ title }: { title: string }) {
   return (
     <div className="flex items-center justify-between gap-3">
       <h2 className="text-lg font-semibold">{title}</h2>
-      <Badge variant="secondary">Enfermería</Badge>
     </div>
   );
 }
