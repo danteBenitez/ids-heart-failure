@@ -61,6 +61,7 @@ export default function NewNursingPatientPage() {
 
   const [form, setForm] = useState<FormData>(initialFormData);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   function updateField(field: keyof FormData, value: string) {
@@ -80,6 +81,39 @@ export default function NewNursingPatientPage() {
     return null;
   }
 
+  function buildCreatePatientInput({ asDraft }: { asDraft: boolean }): CreatePatientInput {
+    const fullName = `${form.firstName.trim()} ${form.lastName.trim()}`.trim();
+
+    return {
+      patient: {
+        fullName: fullName || "Paciente pendiente de identificación",
+        location: form.location.trim() || "Ubicación pendiente",
+      },
+      modelInput: {
+        age: form.age ? Number(form.age) : 0,
+        sex: (form.sex || "M") as "F" | "M",
+        chestPainType: (form.chestPainType || "NAP") as "TA" | "ATA" | "NAP" | "ASY",
+        restingBP: form.restingBP ? Number(form.restingBP) : 0,
+        cholesterol: form.cholesterol ? Number(form.cholesterol) : 0,
+        fastingBS: (form.fastingBS ? Number(form.fastingBS) : 0) as 0 | 1,
+        maxHR: form.maxHR ? Number(form.maxHR) : 0,
+        exerciseAngina: form.exerciseAngina === "Y" ? "Sí" : "No",
+        oldpeak: form.oldpeak ? Number(form.oldpeak) : 0,
+        restingECG: (form.restingECG || "Normal") as "Normal" | "ST" | "LVH",
+        stSlope: (form.stSlope || "Up") as "Up" | "Flat" | "Down",
+      },
+      assessment: {
+        riskLevel: (form.risk as "Bajo" | "Medio" | "Alto") || "Medio",
+        clinicalSummary: asDraft
+          ? form.notes.trim() || "Borrador guardado. Faltan completar datos de triaje."
+          : form.notes.trim() || "Caso creado y pendiente de triaje.",
+        recommendedAction: asDraft
+          ? "Completar el registro antes de confirmar el triaje."
+          : undefined,
+      },
+    };
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const validationError = validate();
@@ -90,36 +124,25 @@ export default function NewNursingPatientPage() {
 
     setIsSubmitting(true);
     try {
-      const input: CreatePatientInput = {
-        patient: {
-          fullName: `${form.firstName.trim()} ${form.lastName.trim()}`,
-          location: form.location.trim(),
-        },
-        modelInput: {
-          age: Number(form.age),
-          sex: form.sex as "F" | "M",
-          chestPainType: form.chestPainType as "TA" | "ATA" | "NAP" | "ASY",
-          restingBP: Number(form.restingBP),
-          cholesterol: Number(form.cholesterol),
-          fastingBS: (form.fastingBS ? Number(form.fastingBS) : 0) as 0 | 1,
-          maxHR: Number(form.maxHR),
-          exerciseAngina: form.exerciseAngina === "Y" ? "Sí" : "No",
-          oldpeak: form.oldpeak ? Number(form.oldpeak) : 0,
-          restingECG: (form.restingECG || "Normal") as "Normal" | "ST" | "LVH",
-          stSlope: (form.stSlope || "Up") as "Up" | "Flat" | "Down",
-        },
-        assessment: {
-          riskLevel: (form.risk as "Bajo" | "Medio" | "Alto") || "Medio",
-          clinicalSummary: form.notes.trim() || "Caso creado y pendiente de triaje.",
-        },
-      };
-
-      await patientService.create(input);
+      await patientService.create(buildCreatePatientInput({ asDraft: false }));
       router.push(`/dashboard/nursing?guide=${guide}`);
     } catch (err) {
       console.error("Error al crear paciente:", err);
       setError("Ocurrió un error al guardar el paciente. Intentá de nuevo.");
       setIsSubmitting(false);
+    }
+  }
+
+  async function handleSaveDraft() {
+    setError(null);
+    setIsSavingDraft(true);
+    try {
+      await patientService.create(buildCreatePatientInput({ asDraft: true }));
+      router.push(`/dashboard/nursing?guide=${guide}`);
+    } catch (err) {
+      console.error("Error al guardar borrador:", err);
+      setError("Ocurrió un error al guardar el borrador. Intentá de nuevo.");
+      setIsSavingDraft(false);
     }
   }
 
@@ -336,13 +359,21 @@ export default function NewNursingPatientPage() {
             ) : null}
 
             <div className="flex flex-wrap gap-3 border-t border-border/70 pt-4">
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting || isSavingDraft}>
                 {isSubmitting ? (
                   <Loader2 className="size-4 animate-spin" data-icon="inline-start" />
                 ) : null}
                 Guardar y pasar a evaluación
               </Button>
-              <Button type="button" variant="outline">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleSaveDraft}
+                disabled={isSubmitting || isSavingDraft}
+              >
+                {isSavingDraft ? (
+                  <Loader2 className="size-4 animate-spin" data-icon="inline-start" />
+                ) : null}
                 Guardar como borrador
               </Button>
             </div>

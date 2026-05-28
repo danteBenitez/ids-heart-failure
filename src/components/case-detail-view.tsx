@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -86,11 +86,6 @@ export function CaseDetailView({
       : patientCase.assessment.riskLevel === "Medio"
         ? "text-amber-700 dark:text-amber-300"
         : "text-emerald-700 dark:text-emerald-300";
-
-  useEffect(() => {
-    setEditableModelInput(patientCase.modelInput);
-    setIsEditingVariables(false);
-  }, [patientCase.modelInput]);
 
   async function handleAdvanceStatus() {
     if (isAdvancing || isClosed) return;
@@ -187,7 +182,6 @@ export function CaseDetailView({
                     : roleCopy.primaryAction}
                 </Button>
               )}
-              <Button variant="outline">{roleCopy.secondaryAction}</Button>
             </div>
           )}
         </div>
@@ -381,9 +375,6 @@ export function CaseDetailView({
                     <Loader2 className="size-4 animate-spin" data-icon="inline-start" />
                   ) : null}
                   Registrar resolución
-                </Button>
-                <Button type="button" variant="outline">
-                  Guardar borrador
                 </Button>
               </div>
             </div>
@@ -675,7 +666,10 @@ export function CaseDetailView({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setIsEditingVariables(true)}
+                    onClick={() => {
+                      setEditableModelInput(patientCase.modelInput);
+                      setIsEditingVariables(true);
+                    }}
                   >
                     <FilePenLine data-icon="inline-start" />
                     Corregir variables
