@@ -1,19 +1,29 @@
+"use client";
+
+import { useSearchParams } from "next/navigation";
 import { Activity, ArrowUpRight, FileHeart } from "lucide-react";
 import { CaseQueueTable } from "@/components/case-queue-table";
 import { RoleDashboardSummary } from "@/components/role-dashboard-summary";
-import { patientCases } from "@/lib/demo-data";
+import { usePatientStore } from "@/stores/patient-store";
 
-type ClinicalPageProps = {
-  searchParams?: Promise<Record<string, string | string[] | undefined>>;
-};
+export default function ClinicalPage() {
+  const searchParams = useSearchParams();
+  const guide = searchParams.get("guide") ?? "on";
 
-export default async function ClinicalPage({ searchParams }: ClinicalPageProps) {
-  const params = (await searchParams) ?? {};
-  const guide = typeof params.guide === "string" ? params.guide : "on";
-  const clinicalCases = patientCases.filter(
-    (patientCase) =>
-      patientCase.nextRole === "medico" ||
-      patientCase.status === "Listo para evaluación",
+  const patients = usePatientStore((s) => s.patients);
+  const isHydrated = usePatientStore((s) => s.isHydrated);
+
+  if (!isHydrated) {
+    return (
+      <div className="flex flex-col gap-6">
+        <div className="h-48 animate-pulse rounded-2xl bg-muted/50" />
+        <div className="h-64 animate-pulse rounded-2xl bg-muted/50" />
+      </div>
+    );
+  }
+
+  const clinicalCases = patients.filter(
+    (p) => p.nextRole === "medico" || p.status === "Listo para evaluación",
   );
 
   return (

@@ -1,23 +1,38 @@
+"use client";
+
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { ClipboardPlus, Clock3, TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CaseQueueTable } from "@/components/case-queue-table";
 import { RoleDashboardSummary } from "@/components/role-dashboard-summary";
-import { patientCases } from "@/lib/demo-data";
+import { usePatientStore } from "@/stores/patient-store";
 
-type NursingPageProps = {
-  searchParams?: Promise<Record<string, string | string[] | undefined>>;
-};
+export default function NursingPage() {
+  const searchParams = useSearchParams();
+  const guide = searchParams.get("guide") ?? "on";
 
-export default async function NursingPage({ searchParams }: NursingPageProps) {
-  const params = (await searchParams) ?? {};
-  const guide = typeof params.guide === "string" ? params.guide : "on";
+  const patients = usePatientStore((s) => s.patients);
+  const isHydrated = usePatientStore((s) => s.isHydrated);
 
-  const pendingCases = patientCases.filter(
-    (patientCase) =>
-      patientCase.nextRole === "enfermeria" ||
-      patientCase.status === "Pendiente de triaje",
+  if (!isHydrated) {
+    return (
+      <div className="flex flex-col gap-6">
+        <div className="h-48 animate-pulse rounded-2xl bg-muted/50" />
+        <div className="h-64 animate-pulse rounded-2xl bg-muted/50" />
+      </div>
+    );
+  }
+
+  const pendingCases = patients.filter(
+    (p) => p.nextRole === "enfermeria" || p.status === "Pendiente de triaje",
   );
+
+  const reviewNeeded = patients.filter(
+    (p) =>
+      p.nextRole === "enfermeria" &&
+      (p.vitals.restingBP === 0 || p.vitals.cholesterol === 0 || p.vitals.maxHR === 0),
+  ).length;
 
   return (
     <div className="flex flex-col gap-6">
@@ -34,13 +49,15 @@ export default async function NursingPage({ searchParams }: NursingPageProps) {
           {
             icon: ClipboardPlus,
             label: "Nuevos ingresos",
-            value: "1",
-            note: "Pacientes listos para alta clínica.",
+            value: String(
+              patients.filter((p) => p.status === "Pendiente de triaje").length,
+            ),
+            note: "Pacientes que aún no pasaron por enfermería.",
           },
           {
             icon: TriangleAlert,
             label: "Revisión requerida",
-            value: "2",
+            value: String(reviewNeeded),
             note: "Casos con datos pendientes de validar.",
           },
         ]}

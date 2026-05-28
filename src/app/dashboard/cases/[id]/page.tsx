@@ -1,36 +1,66 @@
-import { notFound } from "next/navigation";
+"use client";
+
+import { useParams, useSearchParams } from "next/navigation";
 import { CaseDetailView } from "@/components/case-detail-view";
-import { getCaseById, type RoleKey } from "@/lib/demo-data";
+import { usePatientStore } from "@/stores/patient-store";
+import type { RoleKey } from "@/lib/types";
 
-type DashboardCaseDetailPageProps = {
-  params: Promise<{ id: string }>;
-  searchParams?: Promise<Record<string, string | string[] | undefined>>;
-};
-
-function resolveRole(value: string | string[] | undefined, fallback: RoleKey): RoleKey {
-  if (value === "enfermeria" || value === "medico" || value === "cardiologia") {
+function resolveRole(
+  value: string | null,
+  fallback: RoleKey,
+): RoleKey {
+  if (
+    value === "enfermeria" ||
+    value === "medico" ||
+    value === "cardiologia"
+  ) {
     return value;
   }
-
   return fallback;
 }
 
-export default async function DashboardCaseDetailPage({
-  params,
-  searchParams,
-}: DashboardCaseDetailPageProps) {
-  const route = await params;
-  const query = (await searchParams) ?? {};
-  const guide = typeof query.guide === "string" ? query.guide : "on";
-  const patientCase = getCaseById(route.id);
+export default function DashboardCaseDetailPage() {
+  const params = useParams();
+  const searchParams = useSearchParams();
 
-  if (!patientCase) {
-    notFound();
+  const id = params.id as string;
+  const guide = searchParams.get("guide") ?? "on";
+  const roleParam = searchParams.get("role");
+
+  const patients = usePatientStore((s) => s.patients);
+  const isHydrated = usePatientStore((s) => s.isHydrated);
+
+  if (!isHydrated) {
+    return (
+      <div className="flex flex-col gap-6">
+        <div className="h-10 w-48 animate-pulse rounded-lg bg-muted/50" />
+        <div className="h-20 animate-pulse rounded-2xl bg-muted/50" />
+        <div className="h-64 animate-pulse rounded-2xl bg-muted/50" />
+        <div className="h-48 animate-pulse rounded-2xl bg-muted/50" />
+      </div>
+    );
   }
 
-  const activeRole = resolveRole(query.role, patientCase.nextRole);
+  const patientCase = patients.find((p) => p.id === id);
+
+  if (!patientCase) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-4 py-20">
+        <p className="text-lg font-semibold">Caso no encontrado</p>
+        <p className="text-sm text-muted-foreground">
+          No se encontró un paciente con el identificador indicado.
+        </p>
+      </div>
+    );
+  }
+
+  const activeRole = resolveRole(roleParam, patientCase.nextRole);
 
   return (
-    <CaseDetailView patientCase={patientCase} activeRole={activeRole} guide={guide} />
+    <CaseDetailView
+      patientCase={patientCase}
+      activeRole={activeRole}
+      guide={guide}
+    />
   );
 }

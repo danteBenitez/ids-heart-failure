@@ -1,21 +1,30 @@
+"use client";
+
+import { useSearchParams } from "next/navigation";
 import { ArrowUpRight, HeartPulse, ShieldCheck } from "lucide-react";
 import { CaseQueueTable } from "@/components/case-queue-table";
 import { RoleDashboardSummary } from "@/components/role-dashboard-summary";
-import { patientCases } from "@/lib/demo-data";
+import { usePatientStore } from "@/stores/patient-store";
 
-type CardiologyPageProps = {
-  searchParams?: Promise<Record<string, string | string[] | undefined>>;
-};
+export default function CardiologyPage() {
+  const searchParams = useSearchParams();
+  const guide = searchParams.get("guide") ?? "on";
 
-export default async function CardiologyPage({
-  searchParams,
-}: CardiologyPageProps) {
-  const params = (await searchParams) ?? {};
-  const guide = typeof params.guide === "string" ? params.guide : "on";
-  const referredCases = patientCases.filter(
-    (patientCase) =>
-      patientCase.nextRole === "cardiologia" ||
-      patientCase.status === "Derivado a cardiología",
+  const patients = usePatientStore((s) => s.patients);
+  const isHydrated = usePatientStore((s) => s.isHydrated);
+
+  if (!isHydrated) {
+    return (
+      <div className="flex flex-col gap-6">
+        <div className="h-48 animate-pulse rounded-2xl bg-muted/50" />
+        <div className="h-64 animate-pulse rounded-2xl bg-muted/50" />
+      </div>
+    );
+  }
+
+  const referredCases = patients.filter(
+    (p) =>
+      p.nextRole === "cardiologia" || p.status === "Derivado a cardiología",
   );
 
   return (
