@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { ClipboardPlus, Clock3, TriangleAlert } from "lucide-react";
+import { ClipboardPlus, Clock3, FileUp, TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CaseQueueTable } from "@/components/case-queue-table";
 import { RoleDashboardSummary } from "@/components/role-dashboard-summary";
@@ -74,12 +74,20 @@ export default function NursingPage() {
           role="enfermeria"
           guide={guide}
           headerAction={
-            <Button asChild className="w-full md:w-auto">
-              <Link href={`/dashboard/nursing/new?guide=${guide}`}>
-                Cargar paciente nuevo
-                <ClipboardPlus data-icon="inline-end" />
-              </Link>
-            </Button>
+            <div className="flex w-full flex-col gap-2 md:w-auto md:flex-row">
+              <Button asChild variant="outline" className="w-full md:w-auto">
+                <Link href={`/dashboard/nursing/import?guide=${guide}`}>
+                  Importar CSV
+                  <FileUp data-icon="inline-end" />
+                </Link>
+              </Button>
+              <Button asChild className="w-full md:w-auto">
+                <Link href={`/dashboard/nursing/new?guide=${guide}`}>
+                  Cargar paciente nuevo
+                  <ClipboardPlus data-icon="inline-end" />
+                </Link>
+              </Button>
+            </div>
           }
         />
 

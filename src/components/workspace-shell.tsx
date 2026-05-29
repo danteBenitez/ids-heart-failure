@@ -6,6 +6,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import {
   ActivitySquare,
   BrainCircuit,
+  FileUp,
   HeartPulse,
   LayoutDashboard,
   Stethoscope,
@@ -40,7 +41,10 @@ const navigation = [
     title: "Enfermería",
     href: "/dashboard/nursing",
     icon: UserRoundPlus,
-    items: [{ title: "Nuevo paciente", href: "/dashboard/nursing/new" }],
+    items: [
+      { title: "Nuevo paciente", href: "/dashboard/nursing/new" },
+      { title: "Importar CSV", href: "/dashboard/nursing/import" },
+    ],
   },
   {
     title: "Médico clínico",
@@ -137,6 +141,7 @@ export function WorkspaceShellInner({ children }: WorkspaceShellProps) {
                                 isActive={pathname === subItem.href}
                               >
                                 <Link href={withParams(subItem.href)}>
+                                  {subItem.title === "Importar CSV" ? <FileUp /> : null}
                                   <span>{subItem.title}</span>
                                 </Link>
                               </SidebarMenuSubButton>

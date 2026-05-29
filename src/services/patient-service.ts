@@ -28,6 +28,10 @@ type AdvanceStatusOptions = {
   note?: string;
 };
 
+type ImportCasesOptions = {
+  onProgress?: (completed: number, total: number) => void;
+};
+
 export const patientService = {
   async getAll(): Promise<PatientCase[]> {
     return usePatientStore.getState().patients;
@@ -105,6 +109,30 @@ export const patientService = {
     return patient;
   },
 
+  async importTriageCompleteCases(
+    inputs: CreatePatientInput[],
+    options: ImportCasesOptions = {},
+  ): Promise<PatientCase[]> {
+    const importedCases: PatientCase[] = [];
+    const total = inputs.length;
+
+    for (let index = 0; index < inputs.length; index += 1) {
+      const input = inputs[index];
+      const created = await this.create(input);
+      const advanced = await this.advanceStatus(created.id, {
+        note: "Datos clínicos importados desde CSV y validados para evaluación médica.",
+      });
+      importedCases.push(advanced);
+      options.onProgress?.(index + 1, total);
+
+      if ((index + 1) % 20 === 0) {
+        await yieldToBrowser();
+      }
+    }
+
+    return importedCases;
+  },
+
   async advanceStatus(id: string, options?: string | AdvanceStatusOptions): Promise<PatientCase> {
     const store = usePatientStore.getState();
     const patient = store.patients.find((p) => p.id === id);
@@ -116,7 +144,6 @@ export const patientService = {
 
     const normalizedOptions =
       typeof options === "string" ? { note: options } : (options ?? {});
-    console.log({ status: patient.workflow.status });
 
     const now = new Date().toISOString();
     const currentRole = patient.workflow.nextRole;
@@ -239,4 +266,15 @@ function getStatusesForRole(role: RoleKey) {
   };
 
   return statusByRole[role];
+}
+
+function yieldToBrowser() {
+  return new Promise<void>((resolve) => {
+    if (typeof requestAnimationFrame === "function") {
+      requestAnimationFrame(() => resolve());
+      return;
+    }
+
+    setTimeout(resolve, 0);
+  });
 }
