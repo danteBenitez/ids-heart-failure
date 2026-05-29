@@ -18,7 +18,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { PatientCase, RoleKey } from "@/lib/types";
-import { getCaseSummary } from "@/lib/case-helpers";
 
 type CaseQueueTableProps = {
   title: string;
@@ -64,25 +63,29 @@ export function CaseQueueTable({
                 <TableRow key={patientCase.id}>
                   <TableCell className="pl-4 align-top">
                     <div className="space-y-1">
-                      <p className="font-medium">{patientCase.patient}</p>
+                      <p className="font-medium">{patientCase.patient.fullName}</p>
                       <p className="text-xs text-muted-foreground">
-                        {patientCase.id.slice(0, 8)}
+                        {patientCase.patient.recordNumber}
                       </p>
                       <p className="max-w-md text-sm leading-6 text-muted-foreground whitespace-normal">
-                        {getCaseSummary(patientCase.status)}
+                        {patientCase.assessment.clinicalSummary}
                       </p>
                     </div>
                   </TableCell>
                   <TableCell className="text-muted-foreground">
-                    {patientCase.location}
+                    {patientCase.patient.location}
                   </TableCell>
-                  <TableCell>{patientCase.age}</TableCell>
+                  <TableCell>{patientCase.modelInput.age}</TableCell>
                   <TableCell>
-                    <Badge variant="outline">{patientCase.status}</Badge>
+                    <Badge variant="outline">{patientCase.workflow.status}</Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={patientCase.risk === "Alto" ? "default" : "secondary"}>
-                      Riesgo {patientCase.risk}
+                    <Badge
+                      variant={
+                        patientCase.assessment.riskLevel === "Alto" ? "default" : "secondary"
+                      }
+                    >
+                      Riesgo {patientCase.assessment.riskLevel}
                     </Badge>
                   </TableCell>
                   <TableCell>

@@ -3,30 +3,26 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import {
-  ArrowLeft,
-  CheckCircle2,
-  FilePenLine,
-  Loader2,
-} from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
+  CaseActionBar,
+  ClinicalVariablesCard,
+  DispositionCard,
+  MedicalRiskCard,
+  ModelInputFields,
+  TimelineCard,
+} from "@/components/case-detail-sections";
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { getFieldLabel, getFieldValueLabel } from "@/lib/clinical-labels";
-import type { CaseEvent, PatientCase, RoleKey } from "@/lib/types";
-import {
-  getCaseGuideStep,
-  roleActionCopy,
-  roleBasePath,
-  roleLabels,
-} from "@/lib/case-helpers";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { roleActionCopy, roleBasePath } from "@/lib/case-helpers";
+import type { ModelFeaturePayload, PatientCase, RoleKey } from "@/lib/types";
 import { patientService } from "@/services/patient-service";
 
 type CaseDetailViewProps = {
@@ -42,12 +38,40 @@ export function CaseDetailView({
 }: CaseDetailViewProps) {
   const router = useRouter();
   const [isAdvancing, setIsAdvancing] = useState(false);
+  const [isSavingVariables, setIsSavingVariables] = useState(false);
+  const [isNursingDialogOpen, setIsNursingDialogOpen] = useState(false);
+  const [isMedicalDialogOpen, setIsMedicalDialogOpen] = useState(false);
+  const [isCardiologyDialogOpen, setIsCardiologyDialogOpen] = useState(false);
+  const [editableModelInput, setEditableModelInput] = useState<ModelFeaturePayload>(
+    patientCase.modelInput,
+  );
+  const [clinicianDisposition, setClinicianDisposition] = useState<
+    "" | "Derivar a cardiología" | "Cerrar con control"
+  >(patientCase.assessment.clinicianDisposition ?? "");
+  const [clinicianNotes, setClinicianNotes] = useState(
+    patientCase.assessment.clinicianNotes ?? "",
+  );
+  const [hasHeartDisease, setHasHeartDisease] = useState<"" | "true" | "false">(
+    typeof patientCase.assessment.hasHeartDisease === "boolean"
+      ? (String(patientCase.assessment.hasHeartDisease) as "true" | "false")
+      : "",
+  );
+  const [diagnosis, setDiagnosis] = useState(patientCase.assessment.finalDiagnosis ?? "");
+  const [specialistNotes, setSpecialistNotes] = useState(
+    patientCase.assessment.specialistNotes ?? "",
+  );
 
-  const nextPendingEvent = patientCase.events.find((event) => !event.completed);
-  const roleCopy = roleActionCopy[activeRole];
   const basePath = roleBasePath[activeRole];
-  const guideStep = getCaseGuideStep(activeRole);
-  const isClosed = patientCase.status === "Cerrado";
+  const isClosed = patientCase.workflow.status === "Cerrado";
+  const canEditVariables =
+    activeRole === "enfermeria" && patientCase.workflow.status === "Pendiente de triaje";
+
+  function updateEditableModelInput<K extends keyof ModelFeaturePayload>(
+    key: K,
+    value: ModelFeaturePayload[K],
+  ) {
+    setEditableModelInput((current) => ({ ...current, [key]: value }));
+  }
 
   async function handleAdvanceStatus() {
     if (isAdvancing || isClosed) return;
@@ -58,6 +82,67 @@ export function CaseDetailView({
       router.push(`${basePath}?guide=${guide}`);
     } catch (error) {
       console.error("Error al avanzar el estado del caso:", error);
+      setIsAdvancing(false);
+    }
+  }
+
+  async function handleSaveVariables() {
+    if (!canEditVariables || isSavingVariables) return;
+
+    setIsSavingVariables(true);
+    try {
+      await patientService.updateModelInput(patientCase.id, editableModelInput);
+      setIsNursingDialogOpen(false);
+    } catch (error) {
+      console.error("Error al actualizar variables del caso:", error);
+    } finally {
+      setIsSavingVariables(false);
+    }
+  }
+
+  async function handleMedicalDisposition(e: React.FormEvent) {
+    e.preventDefault();
+    if (isAdvancing || isClosed || clinicianDisposition === "") return;
+
+    setIsAdvancing(true);
+    try {
+      const transition = patientService.getMedicalDispositionTransition(clinicianDisposition);
+      await patientService.updateAssessment(patientCase.id, {
+        clinicianDisposition,
+        clinicianNotes: clinicianNotes.trim(),
+      });
+      await patientService.advanceStatus(patientCase.id, {
+        ...transition,
+        note: clinicianNotes.trim() || transition.eventTitle,
+      });
+      setIsMedicalDialogOpen(false);
+      router.push(`${basePath}?guide=${guide}`);
+    } catch (error) {
+      console.error("Error al registrar la conducta médica:", error);
+      setIsAdvancing(false);
+    }
+  }
+
+  async function handleCardiologyResolution(e: React.FormEvent) {
+    e.preventDefault();
+    if (isAdvancing || isClosed || hasHeartDisease === "") return;
+
+    setIsAdvancing(true);
+    try {
+      const transition = patientService.getCardiologyTransition();
+      await patientService.updateAssessment(patientCase.id, {
+        hasHeartDisease: hasHeartDisease === "true",
+        finalDiagnosis: diagnosis.trim(),
+        specialistNotes: specialistNotes.trim(),
+      });
+      await patientService.advanceStatus(patientCase.id, {
+        ...transition,
+        note: diagnosis.trim() || "Se registró la resolución clínica del especialista.",
+      });
+      setIsCardiologyDialogOpen(false);
+      router.push(`${basePath}?guide=${guide}`);
+    } catch (error) {
+      console.error("Error al registrar la resolución cardiológica:", error);
       setIsAdvancing(false);
     }
   }
@@ -73,234 +158,233 @@ export function CaseDetailView({
         </Button>
       </div>
 
-      <section className="rounded-2xl border border-border/70 bg-card/90 p-4">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="space-y-1">
-            <p className="text-sm font-medium">{roleLabels[activeRole]}</p>
-            <p className="text-sm text-muted-foreground">{guideStep}</p>
+      <CaseActionBar
+        role={activeRole}
+        task={patientCase.workflow.currentTask}
+        action={renderPrimaryAction({
+          activeRole,
+          isClosed,
+          isAdvancing,
+          primaryActionLabel: patientCase.workflow.primaryActionLabel,
+          onAdvance: handleAdvanceStatus,
+          onOpenMedical: () => setIsMedicalDialogOpen(true),
+          onOpenCardiology: () => setIsCardiologyDialogOpen(true),
+        })}
+      />
+
+      {(activeRole === "medico" || activeRole === "cardiologia") && (
+        <MedicalRiskCard patientCase={patientCase} />
+      )}
+
+      <ClinicalVariablesCard
+        patientCase={patientCase}
+        canEdit={canEditVariables}
+        onEdit={() => {
+          setEditableModelInput(patientCase.modelInput);
+          setIsNursingDialogOpen(true);
+        }}
+      />
+
+
+      <TimelineCard timeline={patientCase.workflow.timeline} />
+
+      <Dialog open={isNursingDialogOpen} onOpenChange={setIsNursingDialogOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Editar variables clínicas</DialogTitle>
+            <DialogDescription>
+              Ajustá los datos que alimentan la evaluación antes de confirmar el triaje.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[70vh] overflow-y-auto pr-1">
+            <ModelInputFields
+              modelInput={editableModelInput}
+              onChange={updateEditableModelInput}
+            />
           </div>
-          <div className="flex flex-wrap gap-3">
-            {!isClosed ? (
-              <Button onClick={handleAdvanceStatus} disabled={isAdvancing}>
+          <DialogFooter>
+            <Button onClick={handleSaveVariables} disabled={isSavingVariables}>
+              {isSavingVariables ? (
+                <Loader2 className="size-4 animate-spin" data-icon="inline-start" />
+              ) : null}
+              Guardar variables
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setIsNursingDialogOpen(false)}
+              disabled={isSavingVariables}
+            >
+              Cancelar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isMedicalDialogOpen} onOpenChange={setIsMedicalDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Registrar conducta clínica</DialogTitle>
+            <DialogDescription>
+              Elegí la conducta a seguir para este caso y agregá una nota clínica breve.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleMedicalDisposition} className="grid gap-4">
+            <div className="grid gap-3">
+              <DispositionCard
+                title="Derivar a cardiología"
+                description="Escalar el caso para resolución especializada."
+                selected={clinicianDisposition === "Derivar a cardiología"}
+                onSelect={() => setClinicianDisposition("Derivar a cardiología")}
+              />
+              <DispositionCard
+                title="Cerrar con control"
+                description="Cerrar el caso con indicaciones y control clínico habitual."
+                selected={clinicianDisposition === "Cerrar con control"}
+                onSelect={() => setClinicianDisposition("Cerrar con control")}
+              />
+            </div>
+
+            <textarea
+              rows={4}
+              className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+              placeholder="Registrar criterio clínico, plan o motivo de derivación."
+              value={clinicianNotes}
+              onChange={(e) => setClinicianNotes(e.target.value)}
+            />
+
+            <DialogFooter>
+              <Button type="submit" disabled={isAdvancing || clinicianDisposition === ""}>
                 {isAdvancing ? (
                   <Loader2 className="size-4 animate-spin" data-icon="inline-start" />
                 ) : null}
-                {roleCopy.primaryAction}
+                Registrar conducta
               </Button>
-            ) : (
-              <Button disabled>{roleCopy.primaryAction}</Button>
-            )}
-            <Button variant="outline">{roleCopy.secondaryAction}</Button>
-          </div>
-        </div>
-      </section>
-
-
-      <section className="grid gap-6">
-        <Card className="border-border/70 bg-card/90">
-          <CardHeader>
-            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-              <div className="flex items-center gap-4">
-                <Avatar className="size-12">
-                  <AvatarFallback>
-                    {patientCase.patient
-                      .split(" ")
-                      .map((chunk) => chunk[0])
-                      .join("")}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="space-y-1">
-                  <CardTitle className="text-xl">{patientCase.patient}</CardTitle>
-                  <CardDescription>
-                    {patientCase.id.slice(0, 8)} · {patientCase.age} años · {patientCase.sex === "F" ? "Femenino" : "Masculino"}
-                  </CardDescription>
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <Badge variant="outline">{patientCase.status}</Badge>
-                <Badge variant={patientCase.risk === "Alto" ? "default" : "secondary"}>
-                  Riesgo {patientCase.risk}
-                </Badge>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="grid gap-4">
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              {Object.entries(patientCase.vitals).map(([key, value]) => (
-                <div
-                  key={key}
-                  className="rounded-2xl border border-border/70 bg-background/80 p-4"
-                >
-                  <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
-                    {getFieldLabel(key)}
-                  </p>
-                  <p className="mt-2 text-base font-semibold">
-                    {getFieldValueLabel(key, value)}
-                  </p>
-                </div>
-              ))}
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <Button variant="outline" size="sm">
-                <FilePenLine data-icon="inline-start" />
-                Corregir variables
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsMedicalDialogOpen(false)}
+                disabled={isAdvancing}
+              >
+                Cancelar
               </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </section>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
-      <section className="grid gap-6">
-        <Card className="border-border/70 bg-card/90">
-          <CardHeader>
-            <CardTitle>Línea de tiempo del caso</CardTitle>
-            <CardDescription>
-              Estado del paciente dentro del flujo clínico.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 xl:hidden">
-              {patientCase.events.map((event, index) => (
-                <TimelineEvent
-                  key={`${event.id}-${index}`}
-                  event={event}
-                  isCurrent={!event.completed && event === nextPendingEvent}
-                  isLast={index === patientCase.events.length - 1}
-                />
-              ))}
-            </div>
+      <Dialog open={isCardiologyDialogOpen} onOpenChange={setIsCardiologyDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Registrar resolución clínica</DialogTitle>
+            <DialogDescription>
+              Confirmá la presencia o ausencia de enfermedad cardíaca y cerrá el caso.
+            </DialogDescription>
+          </DialogHeader>
 
-            <div className="hidden xl:grid xl:grid-cols-[repeat(3,minmax(0,1fr))] xl:gap-4">
-              {patientCase.events.map((event, index) => (
-                <HorizontalTimelineEvent
-                  key={`${event.id}-${index}`}
-                  event={event}
-                  isCurrent={!event.completed && event === nextPendingEvent}
-                  isFirst={index === 0}
-                  isLast={index === patientCase.events.length - 1}
-                />
-              ))}
+          <form onSubmit={handleCardiologyResolution} className="grid gap-4">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">
+                Presencia de enfermedad cardíaca
+              </p>
+              <select
+                className="mt-2 h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                value={hasHeartDisease}
+                onChange={(e) => setHasHeartDisease(e.target.value as "" | "true" | "false")}
+              >
+                <option value="">Seleccionar</option>
+                <option value="true">Presente</option>
+                <option value="false">Ausente</option>
+              </select>
             </div>
 
-            <div className="mt-4 hidden xl:flex xl:flex-wrap xl:gap-2">
-              {patientCase.events.map((event, index) => (
-                <Badge
-                  key={`${event.by}-${index}`}
-                  variant={!event.completed && event === nextPendingEvent ? "default" : "outline"}
-                >
-                  {event.by}
-                </Badge>
-              ))}
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Detalle diagnóstico</p>
+              <input
+                className="mt-2 h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                placeholder="Ej. Enfermedad coronaria estable de alto riesgo"
+                value={diagnosis}
+                onChange={(e) => setDiagnosis(e.target.value)}
+              />
             </div>
-          </CardContent>
-        </Card>
-      </section>
+
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">
+                Observaciones del especialista
+              </p>
+              <textarea
+                rows={5}
+                className="mt-2 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                placeholder="Registrar hallazgos, estudios sugeridos o indicaciones de cierre."
+                value={specialistNotes}
+                onChange={(e) => setSpecialistNotes(e.target.value)}
+              />
+            </div>
+
+            <DialogFooter>
+              <Button type="submit" disabled={isAdvancing || hasHeartDisease === ""}>
+                {isAdvancing ? (
+                  <Loader2 className="size-4 animate-spin" data-icon="inline-start" />
+                ) : null}
+                Registrar resolución
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsCardiologyDialogOpen(false)}
+                disabled={isAdvancing}
+              >
+                Cancelar
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
-function TimelineEvent({
-  event,
-  isCurrent,
-  isLast,
+function renderPrimaryAction({
+  activeRole,
+  isClosed,
+  isAdvancing,
+  primaryActionLabel,
+  onAdvance,
+  onOpenMedical,
+  onOpenCardiology,
 }: {
-  event: CaseEvent;
-  isCurrent: boolean;
-  isLast: boolean;
+  activeRole: RoleKey;
+  isClosed: boolean;
+  isAdvancing: boolean;
+  primaryActionLabel: string;
+  onAdvance: () => void;
+  onOpenMedical: () => void;
+  onOpenCardiology: () => void;
 }) {
+  if (activeRole === "medico") {
+    return (
+      <Button onClick={onOpenMedical} disabled={isClosed}>
+        {primaryActionLabel}
+      </Button>
+    );
+  }
+
+  if (activeRole === "cardiologia") {
+    return (
+      <Button onClick={onOpenCardiology} disabled={isClosed}>
+        {primaryActionLabel}
+      </Button>
+    );
+  }
+
+  if (activeRole === "coordinacion") {
+    return <Button disabled>{roleActionCopy.coordinacion.primaryAction}</Button>;
+  }
+
   return (
-    <div className="grid grid-cols-[auto_1fr] gap-4">
-      <div className="flex flex-col items-center">
-        <div
-          className={`flex size-9 items-center justify-center rounded-full border ${event.completed
-            ? "border-primary/30 bg-primary/10 text-primary"
-            : isCurrent
-              ? "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300"
-              : "border-border bg-background text-muted-foreground"
-            }`}
-        >
-          {event.completed ? (
-            <CheckCircle2 className="size-4" />
-          ) : (
-            <div className="size-2 rounded-full bg-current" />
-          )}
-        </div>
-        {!isLast ? <div className="my-2 h-full min-h-8 w-px bg-border" /> : null}
-      </div>
-
-      <div
-        className={`rounded-2xl border p-4 ${isCurrent
-          ? "border-amber-500/30 bg-amber-500/5"
-          : "border-border/70 bg-background/80"
-          }`}
-      >
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <p className="text-sm font-semibold">{event.title}</p>
-            <p className="mt-1 text-sm leading-6 text-muted-foreground">{event.note}</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Badge variant={event.completed ? "secondary" : "outline"}>
-              {event.by}
-            </Badge>
-            {isCurrent ? <Badge>Actual</Badge> : null}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function HorizontalTimelineEvent({
-  event,
-  isCurrent,
-  isFirst,
-  isLast,
-}: {
-  event: CaseEvent;
-  isCurrent: boolean;
-  isFirst: boolean;
-  isLast: boolean;
-}) {
-  return (
-    <div className="relative flex min-w-0 flex-col gap-3">
-      <div className="relative flex items-center">
-        {!isFirst ? (
-          <div className="absolute left-0 right-1/2 top-1/2 h-px -translate-y-1/2 bg-border" />
-        ) : null}
-        {!isLast ? (
-          <div className="absolute left-1/2 right-0 top-1/2 h-px -translate-y-1/2 bg-border" />
-        ) : null}
-        <div
-          className={`relative z-10 flex size-9 items-center justify-center rounded-full border bg-background ${event.completed
-            ? "border-primary/30 bg-primary/10 text-primary"
-            : isCurrent
-              ? "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300"
-              : "border-border text-muted-foreground"
-            }`}
-        >
-          {event.completed ? (
-            <CheckCircle2 className="size-4" />
-          ) : (
-            <div className="size-2 rounded-full bg-current" />
-          )}
-        </div>
-      </div>
-
-      <div
-        className={`rounded-2xl border p-4 ${isCurrent
-          ? "border-amber-500/30 bg-amber-500/5"
-          : "border-border/70 bg-background/80"
-          }`}
-      >
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-sm font-semibold">{event.title}</p>
-            {isCurrent ? <Badge>Actual</Badge> : null}
-          </div>
-          <p className="text-sm leading-6 text-muted-foreground">{event.note}</p>
-        </div>
-      </div>
-    </div>
+    <Button onClick={onAdvance} disabled={isClosed || isAdvancing}>
+      {isAdvancing ? <Loader2 className="size-4 animate-spin" data-icon="inline-start" /> : null}
+      {roleActionCopy.enfermeria.primaryAction}
+    </Button>
   );
 }

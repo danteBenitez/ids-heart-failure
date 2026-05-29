@@ -28,8 +28,10 @@ type PatientActions = {
   _setPatients: (patients: PatientCase[]) => void;
   /** Agrega un paciente nuevo al final de la lista. */
   _addPatient: (patient: PatientCase) => void;
-  /** Actualiza parcialmente un paciente existente por ID. */
-  _updatePatient: (id: string, data: Partial<PatientCase>) => void;
+  /** Reemplaza un paciente existente por ID. */
+  _replacePatient: (id: string, patient: PatientCase) => void;
+  /** Marca la store después de la hidratación. */
+  _setIsHydrated: (hydrated: boolean) => void;
 };
 
 export type PatientStore = PatientState & PatientActions;
@@ -40,20 +42,19 @@ export const usePatientStore = create<PatientStore>()(
   persist(
     (set) => ({
       // ── Estado inicial (SSR y antes de hidratación) ──────────────
-      patients: [],
+      patients: seedPatients,
       isHydrated: false,
 
       // ── Acciones internas ────────────────────────────────────────
       _setPatients: (patients) => set({ patients }),
+      _setIsHydrated: (hydrated: boolean) => set({ isHydrated: hydrated }),
 
       _addPatient: (patient) =>
         set((state) => ({ patients: [...state.patients, patient] })),
 
-      _updatePatient: (id, data) =>
+      _replacePatient: (id, patient) =>
         set((state) => ({
-          patients: state.patients.map((p) =>
-            p.id === id ? { ...p, ...data } : p,
-          ),
+          patients: state.patients.map((p) => (p.id === id ? patient : p)),
         })),
     }),
     {
@@ -69,26 +70,24 @@ export const usePatientStore = create<PatientStore>()(
       onRehydrateStorage: () => {
         return (_state, error) => {
           if (error) {
-            console.error(
-              "Error al rehidratar el store de pacientes:",
-              error,
-            );
+            console.error("Error al rehidratar el store de pacientes:", error);
           }
 
-          // Evitamos el error de TDZ (Temporal Dead Zone) difiriendo el acceso a 'usePatientStore'
-          // al siguiente tick del event loop, cuando la asignación de la variable ya ha concluido.
-          setTimeout(() => {
-            const { patients } = usePatientStore.getState();
+          if (!_state) {
+            return;
+          }
 
-            if (patients.length === 0) {
-              // localStorage estaba vacío → cargar datos semilla
-              usePatientStore.setState({ patients: seedPatients });
-            }
+          // Después de que persist haya mergeado, revisamos el estado real
+          const { patients } = _state;
 
-            // Marcar como hidratado para que los componentes dejen de
-            // mostrar el skeleton y rendericen los datos reales.
-            usePatientStore.setState({ isHydrated: true });
-          }, 0);
+          if (patients.length === 0) {
+            // localStorage estaba vacío → cargar datos semilla
+            _state._setPatients(seedPatients);
+          }
+
+          // Marcar como hidratado para que los componentes dejen de
+          // mostrar el skeleton y rendericen los datos reales.
+          _state._setIsHydrated(true);
         };
       },
     },

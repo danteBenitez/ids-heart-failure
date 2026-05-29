@@ -5,7 +5,6 @@ import { Suspense } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import {
   ActivitySquare,
-  ChevronRight,
   HeartPulse,
   LayoutDashboard,
   Stethoscope,
@@ -80,11 +79,27 @@ export function WorkspaceShellInner({ children }: WorkspaceShellProps) {
             <div className="min-w-0 group-data-[collapsible=icon]:hidden">
               <p className="truncate text-sm font-semibold">CardioFlow</p>
               <p className="truncate text-xs text-sidebar-foreground/70">
-                Flujo clínico por rol
+                Sistema de asistencia al diagnóstico
               </p>
             </div>
           </div>
         </SidebarHeader>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Administración</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Dashboard">
+                  <Link href={withParams("/dashboard")}>
+                    <LayoutDashboard />
+                    <span>Tablero</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
 
         <SidebarContent>
           <SidebarGroup>
@@ -129,29 +144,6 @@ export function WorkspaceShellInner({ children }: WorkspaceShellProps) {
 
           <SidebarSeparator />
 
-          <SidebarGroup>
-            <SidebarGroupLabel>Atajos</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip="Dashboard">
-                    <Link href={withParams("/dashboard")}>
-                      <LayoutDashboard />
-                      <span>Tablero</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip="Inicio">
-                    <Link href={withParams("/dashboard")}>
-                      <ChevronRight />
-                      <span>Resumen</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
         </SidebarContent>
 
       </Sidebar>
@@ -166,7 +158,7 @@ export function WorkspaceShellInner({ children }: WorkspaceShellProps) {
                   CardioFlow
                 </p>
                 <p className="text-sm font-medium">
-                  Seguimiento clínico de pacientes
+                  Gestión clínica de casos
                 </p>
               </div>
             </div>

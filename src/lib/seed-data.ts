@@ -1,31 +1,18 @@
 import type { PatientCase } from "./types";
 
-// ---------------------------------------------------------------------------
-// Datos semilla – CardioFlow
-// Estos registros se cargan en localStorage cuando no existe data previa.
-// Representan los 4 estados del flujo clínico para la demo.
-// ---------------------------------------------------------------------------
+const seedTimestamp = "2026-05-28T12:00:00.000Z";
 
-/**
- * Semilla con 4 pacientes que cubren cada etapa del flujo:
- *
- * 1. María Sosa      → Pendiente de triaje       (solo enfermería)
- * 2. Jorge Ferreyra  → Listo para evaluación      (enfermería completó)
- * 3. Elena Acosta    → Derivado a cardiología     (enfermería + médico completaron)
- * 4. Ricardo Vega    → Cerrado                    (ciclo completo)
- */
 export const seedPatients: PatientCase[] = [
-  // ── 1. Pendiente de triaje ───────────────────────────────────────────
   {
-    id: "d4a5f7e2-1b3c-4d8e-9f0a-2b4c6d8e0f1a",
-    patient: "María Sosa",
-    age: 57,
-    sex: "F",
-    status: "Pendiente de triaje",
-    risk: "Medio",
-    nextRole: "enfermeria",
-    location: "Centro Norte",
-    vitals: {
+    id: "PAC-104",
+    patient: {
+      recordNumber: "PAC-104",
+      fullName: "María Sosa",
+      location: "Centro Norte",
+    },
+    modelInput: {
+      age: 57,
+      sex: "F",
       chestPainType: "NAP",
       restingBP: 132,
       cholesterol: 226,
@@ -36,51 +23,62 @@ export const seedPatients: PatientCase[] = [
       restingECG: "Normal",
       stSlope: "Up",
     },
-    insights: [
-      "Aún no hay score definitivo porque el caso no terminó la etapa de enfermería.",
-      "La app puede usar validaciones para detectar campos faltantes o inconsistentes.",
-    ],
-    events: [
-      {
-        id: "evt-001",
-        title: "Caso creado",
-        by: "Recepción",
-        note: "Se abrió un caso preventivo por controles regulares.",
-        completed: true,
-        timestamp: "2026-05-27T09:15:00.000Z",
-      },
-      {
-        id: "evt-002",
-        title: "Carga de triaje",
-        by: "Enfermería",
-        note: "Faltan completar mediciones y confirmar el set de datos.",
-        completed: false,
-        timestamp: "2026-05-27T09:15:00.000Z",
-      },
-      {
-        id: "evt-003",
-        title: "Evaluación médica",
-        by: "Médico general",
-        note: "Bloqueada hasta confirmar el triaje.",
-        completed: false,
-        timestamp: "2026-05-27T09:15:00.000Z",
-      },
-    ],
-    createdAt: "2026-05-27T09:15:00.000Z",
-    updatedAt: "2026-05-27T09:15:00.000Z",
+    workflow: {
+      status: "Pendiente de triaje",
+      nextRole: "enfermeria",
+      currentTask: "Registrar mediciones iniciales y confirmar el ingreso del caso.",
+      primaryActionLabel: "Completar triaje",
+      timeline: [
+        {
+          id: "evt-pac-104-1",
+          title: "Caso creado",
+          by: "Recepción",
+          note: "Se abrió un caso preventivo por controles regulares.",
+          completed: true,
+          timestamp: seedTimestamp,
+        },
+        {
+          id: "evt-pac-104-2",
+          title: "Carga de triaje",
+          by: "Enfermería",
+          note: "Faltan completar mediciones y confirmar el set de datos.",
+          completed: false,
+          timestamp: seedTimestamp,
+        },
+        {
+          id: "evt-pac-104-3",
+          title: "Evaluación médica",
+          by: "Médico general",
+          note: "Bloqueada hasta confirmar el triaje.",
+          completed: false,
+          timestamp: seedTimestamp,
+        },
+      ],
+    },
+    assessment: {
+      riskLevel: "Medio",
+      riskProbability: 0.42,
+      clinicalSummary: "Paciente con fatiga y dolor no anginal. Falta completar mediciones.",
+      topFactors: [
+        "Faltan mediciones clínicas para completar la evaluación.",
+        "Dolor de pecho no anginal.",
+      ],
+    },
+    metadata: {
+      createdAt: seedTimestamp,
+      updatedAt: seedTimestamp,
+    },
   },
-
-  // ── 2. Listo para evaluación ─────────────────────────────────────────
   {
-    id: "b7c8d9e0-f1a2-4b3c-8d5e-6f7a8b9c0d1e",
-    patient: "Jorge Ferreyra",
-    age: 63,
-    sex: "M",
-    status: "Listo para evaluación",
-    risk: "Alto",
-    nextRole: "medico",
-    location: "Policlínico Oeste",
-    vitals: {
+    id: "PAC-271",
+    patient: {
+      recordNumber: "PAC-271",
+      fullName: "Jorge Ferreyra",
+      location: "Policlínico Oeste",
+    },
+    modelInput: {
+      age: 63,
+      sex: "M",
       chestPainType: "ASY",
       restingBP: 145,
       cholesterol: 289,
@@ -91,51 +89,65 @@ export const seedPatients: PatientCase[] = [
       restingECG: "ST",
       stSlope: "Flat",
     },
-    insights: [
-      "La combinación de dolor asintomático, glucemia alta y baja tolerancia al ejercicio eleva el riesgo.",
-      "Este caso es ideal para mostrar cómo la guía resalta el CTA clínico principal.",
-    ],
-    events: [
-      {
-        id: "evt-004",
-        title: "Datos iniciales confirmados",
-        by: "Enfermería",
-        note: "Todas las mediciones necesarias quedaron registradas.",
-        completed: true,
-        timestamp: "2026-05-22T11:30:00.000Z",
-      },
-      {
-        id: "evt-005",
-        title: "Pendiente de score",
-        by: "Médico general",
-        note: "La app espera la evaluación apoyada por el modelo.",
-        completed: false,
-        timestamp: "2026-05-23T08:45:00.000Z",
-      },
-      {
-        id: "evt-006",
-        title: "Derivación",
-        by: "Cardiología",
-        note: "Todavía no iniciada.",
-        completed: false,
-        timestamp: "2026-05-23T08:45:00.000Z",
-      },
-    ],
-    createdAt: "2026-05-22T10:00:00.000Z",
-    updatedAt: "2026-05-23T08:45:00.000Z",
+    workflow: {
+      status: "Listo para evaluación",
+      nextRole: "medico",
+      currentTask: "Calcular el riesgo y decidir si corresponde derivación o cierre clínico.",
+      primaryActionLabel: "Registrar conducta",
+      timeline: [
+        {
+          id: "evt-pac-271-1",
+          title: "Datos iniciales confirmados",
+          by: "Enfermería",
+          note: "Todas las mediciones necesarias quedaron registradas.",
+          completed: true,
+          timestamp: seedTimestamp,
+        },
+        {
+          id: "evt-pac-271-2",
+          title: "Pendiente de score",
+          by: "Médico general",
+          note: "La app espera la evaluación apoyada por el modelo.",
+          completed: false,
+          timestamp: seedTimestamp,
+        },
+        {
+          id: "evt-pac-271-3",
+          title: "Derivación",
+          by: "Cardiología",
+          note: "Todavía no iniciada.",
+          completed: false,
+          timestamp: seedTimestamp,
+        },
+      ],
+    },
+    assessment: {
+      riskLevel: "Alto",
+      riskProbability: 0.86,
+      clinicalSummary:
+        "Caso preparado para consulta médica con factores de riesgo combinados.",
+      topFactors: [
+        "Dolor de pecho asintomático.",
+        "Glucemia en ayunas por encima de 120 mg/dl.",
+        "Angina inducida por ejercicio.",
+        "Pendiente ST plana.",
+      ],
+    },
+    metadata: {
+      createdAt: seedTimestamp,
+      updatedAt: seedTimestamp,
+    },
   },
-
-  // ── 3. Derivado a cardiología ────────────────────────────────────────
   {
-    id: "e1f2a3b4-c5d6-4e7f-8a9b-0c1d2e3f4a5b",
-    patient: "Elena Acosta",
-    age: 68,
-    sex: "F",
-    status: "Derivado a cardiología",
-    risk: "Alto",
-    nextRole: "cardiologia",
-    location: "Clínica Sur",
-    vitals: {
+    id: "PAC-318",
+    patient: {
+      recordNumber: "PAC-318",
+      fullName: "Elena Acosta",
+      location: "Clínica Sur",
+    },
+    modelInput: {
+      age: 68,
+      sex: "F",
       chestPainType: "ATA",
       restingBP: 138,
       cholesterol: 241,
@@ -146,51 +158,68 @@ export const seedPatients: PatientCase[] = [
       restingECG: "LVH",
       stSlope: "Flat",
     },
-    insights: [
-      "El score ya fue calculado y la derivación quedó justificada con trazabilidad.",
-      "La vista de cardiología debe recibir el contexto resumido, no repetir toda la carga manual.",
-    ],
-    events: [
-      {
-        id: "evt-007",
-        title: "Triaje completado",
-        by: "Enfermería",
-        note: "Registro inicial validado.",
-        completed: true,
-        timestamp: "2026-05-15T14:20:00.000Z",
-      },
-      {
-        id: "evt-008",
-        title: "Riesgo alto detectado",
-        by: "Médico general",
-        note: "Se deriva a cardiología con score y explicación.",
-        completed: true,
-        timestamp: "2026-05-20T10:00:00.000Z",
-      },
-      {
-        id: "evt-009",
-        title: "Consulta especializada",
-        by: "Cardiología",
-        note: "Pendiente de resolución.",
-        completed: false,
-        timestamp: "2026-05-20T10:00:00.000Z",
-      },
-    ],
-    createdAt: "2026-05-15T08:30:00.000Z",
-    updatedAt: "2026-05-20T10:00:00.000Z",
+    workflow: {
+      status: "Derivado a cardiología",
+      nextRole: "cardiologia",
+      currentTask: "Revisar el score y registrar la resolución clínica final.",
+      primaryActionLabel: "Registrar resolución",
+      timeline: [
+        {
+          id: "evt-pac-318-1",
+          title: "Triaje completado",
+          by: "Enfermería",
+          note: "Registro inicial validado.",
+          completed: true,
+          timestamp: seedTimestamp,
+        },
+        {
+          id: "evt-pac-318-2",
+          title: "Riesgo alto detectado",
+          by: "Médico general",
+          note: "Se deriva a cardiología con score y explicación.",
+          completed: true,
+          timestamp: seedTimestamp,
+        },
+        {
+          id: "evt-pac-318-3",
+          title: "Consulta especializada",
+          by: "Cardiología",
+          note: "Pendiente de resolución.",
+          completed: false,
+          timestamp: seedTimestamp,
+        },
+      ],
+    },
+    assessment: {
+      riskLevel: "Alto",
+      riskProbability: 0.79,
+      clinicalSummary:
+        "Paciente ya priorizada y esperando confirmación del especialista.",
+      topFactors: [
+        "Glucemia en ayunas elevada.",
+        "Angina por ejercicio.",
+        "ECG con hipertrofia ventricular izquierda.",
+      ],
+      hasHeartDisease: true,
+      finalDiagnosis: "Enfermedad coronaria estable de alto riesgo.",
+      specialistNotes:
+        "Se confirma la necesidad de manejo especializado y cierre con indicaciones.",
+    },
+    metadata: {
+      createdAt: seedTimestamp,
+      updatedAt: seedTimestamp,
+    },
   },
-
-  // ── 4. Cerrado (ciclo completo) ──────────────────────────────────────
   {
-    id: "f8e7d6c5-b4a3-4291-8f0e-d1c2b3a4f5e6",
-    patient: "Ricardo Vega",
-    age: 52,
-    sex: "M",
-    status: "Cerrado",
-    risk: "Bajo",
-    nextRole: "coordinacion",
-    location: "Hospital Central",
-    vitals: {
+    id: "PAC-402",
+    patient: {
+      recordNumber: "PAC-402",
+      fullName: "Ricardo Vega",
+      location: "Hospital Central",
+    },
+    modelInput: {
+      age: 52,
+      sex: "M",
       chestPainType: "TA",
       restingBP: 124,
       cholesterol: 198,
@@ -201,37 +230,53 @@ export const seedPatients: PatientCase[] = [
       restingECG: "Normal",
       stSlope: "Up",
     },
-    insights: [
-      "Sirve para mostrar que la app no solo deriva, también documenta casos de bajo riesgo.",
-      "El tablero administrativo puede usar este cierre para métricas de eficiencia y seguimiento.",
-    ],
-    events: [
-      {
-        id: "evt-010",
-        title: "Triaje completado",
-        by: "Enfermería",
-        note: "Ingreso sin anomalías.",
-        completed: true,
-        timestamp: "2026-05-10T09:00:00.000Z",
-      },
-      {
-        id: "evt-011",
-        title: "Evaluación médica",
-        by: "Médico general",
-        note: "Riesgo bajo, se indica control en 90 días.",
-        completed: true,
-        timestamp: "2026-05-13T15:30:00.000Z",
-      },
-      {
-        id: "evt-012",
-        title: "Caso cerrado",
-        by: "Coordinación clínica",
-        note: "Se registró el plan preventivo.",
-        completed: true,
-        timestamp: "2026-05-18T11:00:00.000Z",
-      },
-    ],
-    createdAt: "2026-05-10T08:00:00.000Z",
-    updatedAt: "2026-05-18T11:00:00.000Z",
+    workflow: {
+      status: "Cerrado",
+      nextRole: "coordinacion",
+      currentTask: "Inspeccionar el historial completo y cómo se cerró el caso.",
+      primaryActionLabel: "Ver cierre",
+      timeline: [
+        {
+          id: "evt-pac-402-1",
+          title: "Triaje completado",
+          by: "Enfermería",
+          note: "Ingreso sin anomalías.",
+          completed: true,
+          timestamp: seedTimestamp,
+        },
+        {
+          id: "evt-pac-402-2",
+          title: "Evaluación médica",
+          by: "Médico general",
+          note: "Riesgo bajo, se indica control en 90 días.",
+          completed: true,
+          timestamp: seedTimestamp,
+        },
+        {
+          id: "evt-pac-402-3",
+          title: "Caso cerrado",
+          by: "Coordinación clínica",
+          note: "Se registró el plan preventivo.",
+          completed: true,
+          timestamp: seedTimestamp,
+        },
+      ],
+    },
+    assessment: {
+      riskLevel: "Bajo",
+      riskProbability: 0.24,
+      clinicalSummary: "Caso cerrado por el médico clínico sin necesidad de derivación.",
+      topFactors: [
+        "Frecuencia cardíaca máxima conservada.",
+        "Presión en reposo dentro de rango.",
+        "Ausencia de angina por ejercicio.",
+      ],
+      clinicianDisposition: "Cerrar con control",
+      clinicianNotes: "Sin criterios de derivación. Se indica control ambulatorio habitual.",
+    },
+    metadata: {
+      createdAt: seedTimestamp,
+      updatedAt: seedTimestamp,
+    },
   },
 ];

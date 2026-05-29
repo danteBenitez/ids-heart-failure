@@ -5,15 +5,8 @@ import { CaseDetailView } from "@/components/case-detail-view";
 import { usePatientStore } from "@/stores/patient-store";
 import type { RoleKey } from "@/lib/types";
 
-function resolveRole(
-  value: string | null,
-  fallback: RoleKey,
-): RoleKey {
-  if (
-    value === "enfermeria" ||
-    value === "medico" ||
-    value === "cardiologia"
-  ) {
+function resolveRole(value: string | null, fallback: RoleKey): RoleKey {
+  if (value === "enfermeria" || value === "medico" || value === "cardiologia") {
     return value;
   }
   return fallback;
@@ -22,7 +15,6 @@ function resolveRole(
 export default function DashboardCaseDetailPage() {
   const params = useParams();
   const searchParams = useSearchParams();
-
   const id = params.id as string;
   const guide = searchParams.get("guide") ?? "on";
   const roleParam = searchParams.get("role");
@@ -54,7 +46,7 @@ export default function DashboardCaseDetailPage() {
     );
   }
 
-  const activeRole = resolveRole(roleParam, patientCase.nextRole);
+  const activeRole = resolveRole(roleParam, patientCase.workflow.nextRole);
 
   return (
     <CaseDetailView

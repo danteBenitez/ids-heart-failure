@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { fieldValueLabels } from "@/lib/clinical-labels";
-import type { CreatePatientInput, PatientVitals } from "@/lib/types";
+import type { CreatePatientInput } from "@/lib/types";
 import { patientService } from "@/services/patient-service";
 
 type FormData = {
@@ -80,6 +80,34 @@ export default function NewNursingPatientPage() {
     return null;
   }
 
+  function buildCreatePatientInput(): CreatePatientInput {
+    const fullName = `${form.firstName.trim()} ${form.lastName.trim()}`.trim();
+
+    return {
+      patient: {
+        fullName,
+        location: form.location.trim(),
+      },
+      modelInput: {
+        age: Number(form.age),
+        sex: form.sex as "F" | "M",
+        chestPainType: form.chestPainType as "TA" | "ATA" | "NAP" | "ASY",
+        restingBP: Number(form.restingBP),
+        cholesterol: Number(form.cholesterol),
+        fastingBS: (form.fastingBS ? Number(form.fastingBS) : 0) as 0 | 1,
+        maxHR: Number(form.maxHR),
+        exerciseAngina: form.exerciseAngina === "Y" ? "Sí" : "No",
+        oldpeak: form.oldpeak ? Number(form.oldpeak) : 0,
+        restingECG: (form.restingECG || "Normal") as "Normal" | "ST" | "LVH",
+        stSlope: (form.stSlope || "Up") as "Up" | "Flat" | "Down",
+      },
+      assessment: {
+        riskLevel: (form.risk as "Bajo" | "Medio" | "Alto") || "Medio",
+        clinicalSummary: form.notes.trim() || "Caso creado y pendiente de triaje.",
+      },
+    };
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const validationError = validate();
@@ -90,28 +118,8 @@ export default function NewNursingPatientPage() {
 
     setIsSubmitting(true);
     try {
-      const vitals: PatientVitals = {
-        chestPainType: form.chestPainType,
-        restingBP: Number(form.restingBP),
-        cholesterol: Number(form.cholesterol),
-        fastingBS: form.fastingBS ? Number(form.fastingBS) : 0,
-        maxHR: Number(form.maxHR),
-        exerciseAngina: form.exerciseAngina === "Y" ? "Sí" : "No",
-        oldpeak: form.oldpeak ? Number(form.oldpeak) : 0,
-        restingECG: form.restingECG || "Normal",
-        stSlope: form.stSlope || "Up",
-      };
-
-      const input: CreatePatientInput = {
-        patient: `${form.firstName.trim()} ${form.lastName.trim()}`,
-        age: Number(form.age),
-        sex: form.sex as "F" | "M",
-        location: form.location.trim(),
-        risk: (form.risk as "Bajo" | "Medio" | "Alto") || "Medio",
-        vitals,
-      };
-
-      await patientService.create(input);
+      const patient = await patientService.create(buildCreatePatientInput());
+      await patientService.advanceStatus(patient.id);
       router.push(`/dashboard/nursing?guide=${guide}`);
     } catch (err) {
       console.error("Error al crear paciente:", err);
@@ -338,9 +346,6 @@ export default function NewNursingPatientPage() {
                   <Loader2 className="size-4 animate-spin" data-icon="inline-start" />
                 ) : null}
                 Guardar y pasar a evaluación
-              </Button>
-              <Button type="button" variant="outline">
-                Guardar como borrador
               </Button>
             </div>
           </form>

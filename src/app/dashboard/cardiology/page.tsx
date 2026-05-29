@@ -24,7 +24,8 @@ export default function CardiologyPage() {
 
   const referredCases = patients.filter(
     (p) =>
-      p.nextRole === "cardiologia" || p.status === "Derivado a cardiología",
+      p.workflow.nextRole === "cardiologia" ||
+      p.workflow.status === "Derivado a cardiología",
   );
 
   return (
@@ -48,8 +49,8 @@ export default function CardiologyPage() {
           {
             icon: ArrowUpRight,
             label: "Salida esperada",
-            value: "Resolución clínica",
-            note: "Cardiología confirma, corrige o cierra el caso.",
+            value: "Cierre del caso",
+            note: "Cardiología registra el diagnóstico y cierra el caso.",
           },
         ]}
       />

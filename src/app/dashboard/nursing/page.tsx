@@ -25,13 +25,17 @@ export default function NursingPage() {
   }
 
   const pendingCases = patients.filter(
-    (p) => p.nextRole === "enfermeria" || p.status === "Pendiente de triaje",
+    (p) =>
+      p.workflow.nextRole === "enfermeria" ||
+      p.workflow.status === "Pendiente de triaje",
   );
 
   const reviewNeeded = patients.filter(
     (p) =>
-      p.nextRole === "enfermeria" &&
-      (p.vitals.restingBP === 0 || p.vitals.cholesterol === 0 || p.vitals.maxHR === 0),
+      p.workflow.nextRole === "enfermeria" &&
+      (p.modelInput.restingBP === 0 ||
+        p.modelInput.cholesterol === 0 ||
+        p.modelInput.maxHR === 0),
   ).length;
 
   return (
@@ -50,7 +54,7 @@ export default function NursingPage() {
             icon: ClipboardPlus,
             label: "Nuevos ingresos",
             value: String(
-              patients.filter((p) => p.status === "Pendiente de triaje").length,
+              patients.filter((p) => p.workflow.status === "Pendiente de triaje").length,
             ),
             note: "Pacientes que aún no pasaron por enfermería.",
           },

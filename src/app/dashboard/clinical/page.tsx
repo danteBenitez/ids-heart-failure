@@ -23,32 +23,34 @@ export default function ClinicalPage() {
   }
 
   const clinicalCases = patients.filter(
-    (p) => p.nextRole === "medico" || p.status === "Listo para evaluación",
+    (p) =>
+      p.workflow.nextRole === "medico" ||
+      p.workflow.status === "Listo para evaluación",
   );
 
   return (
     <div className="flex flex-col gap-6">
       <RoleDashboardSummary
         title="Médico clínico"
-        description="Casos listos para evaluación, priorización y definición de conducta."
+        description="Casos listos para evaluación clínica y definición de conducta."
         metrics={[
           {
             icon: FileHeart,
-            label: "Listos para evaluar",
+            label: "Pendientes de evaluación",
             value: String(clinicalCases.length),
-            note: "Pacientes con triaje suficiente para revisión clínica.",
+            note: "Casos listos para score y decisión clínica.",
           },
           {
             icon: Activity,
-            label: "Acción principal",
-            value: "Registrar evaluación",
-            note: "El score apoya la decisión, pero la conducta queda a cargo del médico.",
+            label: "Opciones de salida",
+            value: "2",
+            note: "Derivar a cardiología o cerrar con control.",
           },
           {
             icon: ArrowUpRight,
-            label: "Siguiente transición",
+            label: "Escalamiento",
             value: "Cardiología",
-            note: "Solo los casos priorizados avanzan a derivación especializada.",
+            note: "Los casos priorizados siguen el circuito de derivación especializada.",
           },
         ]}
       />
