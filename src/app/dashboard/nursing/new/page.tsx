@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { Check, Loader2, MoveRight, TrendingDown, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -12,7 +12,15 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { fieldValueLabels } from "@/lib/clinical-labels";
+import { cn } from "@/lib/utils";
 import type { CreatePatientInput } from "@/lib/types";
 import { patientService } from "@/services/patient-service";
 
@@ -69,12 +77,29 @@ export default function NewNursingPatientPage() {
   function validate(): string | null {
     if (!form.firstName.trim() || !form.lastName.trim()) return "El nombre y apellido son obligatorios.";
     if (!form.age || Number(form.age) <= 0) return "La edad debe ser mayor a 0.";
+    if (Number(form.age) < 18 || Number(form.age) > 120) return "La edad debe estar entre 18 y 120 años.";
     if (!form.sex) return "Seleccioná el sexo del paciente.";
     if (!form.location.trim()) return "La ubicación es obligatoria.";
     if (!form.chestPainType) return "Seleccioná el tipo de dolor de pecho.";
+    if (!form.exerciseAngina) return "Indicá si presenta angina inducida por ejercicio.";
     if (!form.restingBP) return "La presión en reposo es obligatoria.";
+    if (Number(form.restingBP) < 70 || Number(form.restingBP) > 250) {
+      return "La presión en reposo debe estar entre 70 y 250 mm Hg.";
+    }
     if (!form.cholesterol) return "El colesterol es obligatorio.";
+    if (Number(form.cholesterol) < 50 || Number(form.cholesterol) > 700) {
+      return "El colesterol debe estar entre 50 y 700 mg/dl.";
+    }
     if (!form.maxHR) return "La frecuencia máxima es obligatoria.";
+    if (Number(form.maxHR) < 60 || Number(form.maxHR) > 240) {
+      return "La frecuencia máxima debe estar entre 60 y 240 lpm.";
+    }
+    if (!form.fastingBS) return "Indicá el rango de glucemia en ayunas.";
+    if (!form.restingECG) return "Seleccioná el resultado del ECG en reposo.";
+    if (!form.stSlope) return "Seleccioná la pendiente del segmento ST.";
+    if (form.oldpeak && (Number(form.oldpeak) < -5 || Number(form.oldpeak) > 10)) {
+      return "La depresión del segmento ST debe estar entre -5.0 y 10.0.";
+    }
     return null;
   }
 
@@ -169,23 +194,17 @@ export default function NewNursingPatientPage() {
                   />
                 </Field>
                 <Field label="Sexo">
-                  <select
-                    className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                    value={form.sex}
-                    onChange={(e) => updateField("sex", e.target.value)}
-                  >
-                    <option value="">Seleccionar</option>
-                    <option value="F">{fieldValueLabels.sex.F}</option>
-                    <option value="M">{fieldValueLabels.sex.M}</option>
-                  </select>
+                  <Select value={form.sex} onValueChange={(value) => updateField("sex", value)}>
+                    <SelectTrigger className="w-full bg-background">
+                      <SelectValue placeholder="Seleccionar" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="F">{fieldValueLabels.sex.F}</SelectItem>
+                      <SelectItem value="M">{fieldValueLabels.sex.M}</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </Field>
-              </div>
-            </section>
-
-            <section className="rounded-2xl border border-border/70 bg-background/70 p-5">
-              <SectionTitle title="Ubicación del caso" />
-              <div className="mt-4 grid gap-4 md:grid-cols-1">
-                <Field label="Ubicación / centro">
+                <Field label="Ubicación / centro" className="xl:col-span-2">
                   <Input
                     placeholder="Hospital Central"
                     value={form.location}
@@ -197,30 +216,35 @@ export default function NewNursingPatientPage() {
 
             <section className="rounded-2xl border border-border/70 bg-background/70 p-5">
               <SectionTitle title="Motivo de consulta" />
-              <div className="mt-4 grid gap-4 md:grid-cols-2">
+              <div className="mt-4 grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
                 <Field label="Tipo de dolor de pecho">
-                  <select
-                    className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                  <ChoiceGrid
                     value={form.chestPainType}
-                    onChange={(e) => updateField("chestPainType", e.target.value)}
-                  >
-                    <option value="">Seleccionar</option>
-                    <option value="TA">{fieldValueLabels.chestPainType.TA}</option>
-                    <option value="ATA">{fieldValueLabels.chestPainType.ATA}</option>
-                    <option value="NAP">{fieldValueLabels.chestPainType.NAP}</option>
-                    <option value="ASY">{fieldValueLabels.chestPainType.ASY}</option>
-                  </select>
+                    onChange={(value) => updateField("chestPainType", value)}
+                    options={[
+                      { value: "TA", label: fieldValueLabels.chestPainType.TA },
+                      { value: "ATA", label: fieldValueLabels.chestPainType.ATA },
+                      { value: "NAP", label: fieldValueLabels.chestPainType.NAP },
+                      { value: "ASY", label: fieldValueLabels.chestPainType.ASY },
+                    ]}
+                    columns="md:grid-cols-2"
+                    compact
+                  />
                 </Field>
-                <Field label="Angina por ejercicio">
-                  <select
-                    className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                <Field
+                  label="Angina por ejercicio"
+                  hint="Indica si el dolor aparece o empeora con el esfuerzo."
+                >
+                  <ChoiceGrid
                     value={form.exerciseAngina}
-                    onChange={(e) => updateField("exerciseAngina", e.target.value)}
-                  >
-                    <option value="">Seleccionar</option>
-                    <option value="N">{fieldValueLabels.exerciseAngina.N}</option>
-                    <option value="Y">{fieldValueLabels.exerciseAngina.Y}</option>
-                  </select>
+                    onChange={(value) => updateField("exerciseAngina", value)}
+                    options={[
+                      { value: "N", label: fieldValueLabels.exerciseAngina.N },
+                      { value: "Y", label: fieldValueLabels.exerciseAngina.Y },
+                    ]}
+                    columns="grid-cols-2"
+                    compact
+                  />
                 </Field>
               </div>
             </section>
@@ -232,6 +256,8 @@ export default function NewNursingPatientPage() {
                   <Input
                     type="number"
                     placeholder="132"
+                    min={70}
+                    max={250}
                     value={form.restingBP}
                     onChange={(e) => updateField("restingBP", e.target.value)}
                   />
@@ -240,6 +266,8 @@ export default function NewNursingPatientPage() {
                   <Input
                     type="number"
                     placeholder="148"
+                    min={60}
+                    max={240}
                     value={form.maxHR}
                     onChange={(e) => updateField("maxHR", e.target.value)}
                   />
@@ -248,59 +276,90 @@ export default function NewNursingPatientPage() {
                   <Input
                     type="number"
                     placeholder="226"
+                    min={50}
+                    max={700}
                     value={form.cholesterol}
                     onChange={(e) => updateField("cholesterol", e.target.value)}
                   />
                 </Field>
                 <Field label="Glucemia en ayunas">
-                  <select
-                    className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                  <ChoiceGrid
                     value={form.fastingBS}
-                    onChange={(e) => updateField("fastingBS", e.target.value)}
-                  >
-                    <option value="">Seleccionar</option>
-                    <option value="0">{fieldValueLabels.fastingBS[0]}</option>
-                    <option value="1">{fieldValueLabels.fastingBS[1]}</option>
-                  </select>
+                    onChange={(value) => updateField("fastingBS", value)}
+                    options={[
+                      { value: "0", label: fieldValueLabels.fastingBS[0] },
+                      { value: "1", label: fieldValueLabels.fastingBS[1] },
+                    ]}
+                    columns="grid-cols-1"
+                    compact
+                  />
                 </Field>
               </div>
             </section>
 
             <section className="rounded-2xl border border-border/70 bg-background/70 p-5">
-              <SectionTitle title="Pruebas complementarias" />
-              <div className="mt-4 grid gap-4 md:grid-cols-3">
-                <Field label="ECG en reposo">
-                  <select
-                    className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                    value={form.restingECG}
-                    onChange={(e) => updateField("restingECG", e.target.value)}
+              <SectionTitle title="Resultados complementarios" />
+              <div className="mt-4 grid gap-6">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Field
+                    label="ECG en reposo"
+                    hint="Electrocardiograma en reposo"
                   >
-                    <option value="">Seleccionar</option>
-                    <option value="Normal">{fieldValueLabels.restingECG.Normal}</option>
-                    <option value="ST">{fieldValueLabels.restingECG.ST}</option>
-                    <option value="LVH">{fieldValueLabels.restingECG.LVH}</option>
-                  </select>
-                </Field>
-                <Field label="Oldpeak">
-                  <Input
-                    type="number"
-                    step="0.1"
-                    placeholder="0.4"
-                    value={form.oldpeak}
-                    onChange={(e) => updateField("oldpeak", e.target.value)}
-                  />
-                </Field>
+                    <Select
+                      value={form.restingECG}
+                      onValueChange={(value) => updateField("restingECG", value)}
+                    >
+                      <SelectTrigger className="w-full bg-background">
+                        <SelectValue placeholder="Seleccionar" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Normal">
+                          {fieldValueLabels.restingECG.Normal}
+                        </SelectItem>
+                        <SelectItem value="ST">{fieldValueLabels.restingECG.ST}</SelectItem>
+                        <SelectItem value="LVH">{fieldValueLabels.restingECG.LVH}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                  <Field
+                    label="Depresión del segmento ST"
+                    hint="Diferencia respecto al reposo durante el esfuerzo."
+                  >
+                    <Input
+                      type="number"
+                      step="0.1"
+                      placeholder="0.4"
+                      min={-5}
+                      max={10}
+                      value={form.oldpeak}
+                      onChange={(e) => updateField("oldpeak", e.target.value)}
+                    />
+                  </Field>
+                </div>
                 <Field label="Pendiente ST">
-                  <select
-                    className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                  <ChoiceGrid
                     value={form.stSlope}
-                    onChange={(e) => updateField("stSlope", e.target.value)}
-                  >
-                    <option value="">Seleccionar</option>
-                    <option value="Up">{fieldValueLabels.stSlope.Up}</option>
-                    <option value="Flat">{fieldValueLabels.stSlope.Flat}</option>
-                    <option value="Down">{fieldValueLabels.stSlope.Down}</option>
-                  </select>
+                    onChange={(value) => updateField("stSlope", value)}
+                    options={[
+                      {
+                        value: "Up",
+                        label: fieldValueLabels.stSlope.Up,
+                        icon: TrendingUp,
+                      },
+                      {
+                        value: "Flat",
+                        label: fieldValueLabels.stSlope.Flat,
+                        icon: MoveRight,
+                      },
+                      {
+                        value: "Down",
+                        label: fieldValueLabels.stSlope.Down,
+                        icon: TrendingDown,
+                      },
+                    ]}
+                    columns="md:grid-cols-3"
+                    compact
+                  />
                 </Field>
               </div>
             </section>
@@ -350,15 +409,82 @@ function SectionTitle({ title }: { title: string }) {
 
 function Field({
   label,
+  hint,
+  className,
   children,
 }: {
   label: string;
+  hint?: string;
+  className?: string;
   children: React.ReactNode;
 }) {
   return (
-    <label className="grid gap-2">
+    <label className={cn("grid gap-2", className)}>
       <span className="text-sm font-medium">{label}</span>
+      {hint ? (
+        <span className="-mt-1 text-xs leading-5 text-muted-foreground">{hint}</span>
+      ) : null}
       {children}
     </label>
+  );
+}
+
+function ChoiceGrid({
+  value,
+  onChange,
+  options,
+  columns = "grid-cols-1",
+  compact = false,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  options: {
+    value: string;
+    label: string;
+    icon?: React.ComponentType<{ className?: string }>;
+  }[];
+  columns?: string;
+  compact?: boolean;
+}) {
+  return (
+    <div className={cn("grid gap-2", columns)}>
+      {options.map((option) => {
+        const selected = value === option.value;
+        const Icon = option.icon;
+
+        return (
+          <button
+            key={option.value}
+            type="button"
+            onClick={() => onChange(option.value)}
+            className={cn(
+              "flex items-center justify-between rounded-xl border px-3 text-left text-sm transition-colors",
+              compact ? "min-h-10 py-2" : "min-h-11 py-2.5",
+              "hover:border-primary/50 hover:bg-accent/50",
+              selected
+                ? "border-primary bg-primary/5 text-foreground ring-1 ring-primary/20"
+                : "border-input bg-background text-muted-foreground",
+            )}
+          >
+            <div className="flex items-center gap-3">
+              {Icon ? (
+                <span
+                  className={cn(
+                    "rounded-lg border p-1.5",
+                    selected
+                      ? "border-primary/30 bg-primary/10 text-primary"
+                      : "border-border/70 bg-muted/40 text-muted-foreground",
+                  )}
+                >
+                  <Icon className="size-4" />
+                </span>
+              ) : null}
+              <span>{option.label}</span>
+            </div>
+            {selected ? <Check className="size-4 text-primary" /> : null}
+          </button>
+        );
+      })}
+    </div>
   );
 }
