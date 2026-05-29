@@ -20,10 +20,11 @@ stateDiagram-v2
 
     note right of ListoParaEvaluacion
         Rol: Médico clínico
-        Acción: Evaluar con el modelo
+        Acción: Registrar conducta
     end note
 
     ListoParaEvaluacion --> DerivadoACardiologia : Derivar a cardiología
+    ListoParaEvaluacion --> Cerrado : Cerrar con control
 
     note right of DerivadoACardiologia
         Rol: Cardiología
@@ -33,8 +34,8 @@ stateDiagram-v2
     DerivadoACardiologia --> Cerrado : Cerrar caso
 
     note right of Cerrado
-        Rol: Coordinación clínica
-        Acción: Ver cierre
+        Estado final del caso
+        Consulta posterior: Coordinación clínica
     end note
 
     Cerrado --> [*]
@@ -48,12 +49,12 @@ stateDiagram-v2
    - **Transición:** Genera evento "Triaje completado" y avanza a "Listo para evaluación".
 2. **Médico Clínico**: 
    - **Estado:** Listo para evaluación
-   - **Acción:** `Evaluar con el modelo`
-   - **Transición:** Registra la conducta clínica y, si corresponde, deriva el caso a cardiología.
+   - **Acción:** `Registrar conducta`
+   - **Transición:** Puede **derivar a cardiología** si el caso requiere evaluación especializada, o **cerrar con control** si no considera necesaria la derivación.
 3. **Cardiología**: 
    - **Estado:** Derivado a cardiología
    - **Acción:** `Registrar resolución`
    - **Transición:** Genera evento "Resolución cardiológica registrada" y avanza a "Cerrado".
 4. **Coordinación Clínica**:
    - **Estado:** Cerrado
-   - **Acción:** `Ver cierre` (Solo lectura, el ciclo finaliza aquí).
+   - **Acción:** `Ver cierre` (Solo lectura; no modifica el flujo clínico, sino que permite consultar el historial del caso).
