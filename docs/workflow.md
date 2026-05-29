@@ -4,43 +4,38 @@ Este diagrama representa el ciclo de vida de un paciente en el sistema, los role
 
 ```mermaid
 stateDiagram-v2
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px;
-    classDef enfermeria fill:#e0f2fe,stroke:#0284c7,stroke-width:2px,color:#0369a1;
-    classDef medico fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#b45309;
-    classDef cardiologia fill:#fee2e2,stroke:#ef4444,stroke-width:2px,color:#b91c1c;
-    classDef coordinacion fill:#f3f4f6,stroke:#4b5563,stroke-width:2px,color:#374151;
+    state "Pendiente de triaje" as PendienteDeTriaje
+    state "Listo para evaluación" as ListoParaEvaluacion
+    state "Derivado a cardiología" as DerivadoACardiologia
+    state "Cerrado" as Cerrado
 
     [*] --> PendienteDeTriaje : Nuevo ingreso (Recepción/Enfermería)
 
-    state PendienteDeTriaje {
-        direction LR
-        AccionEnf: Completar triaje
-        AccionEnf ::: enfermeria
-    }
-    
+    note right of PendienteDeTriaje
+        Rol: Enfermería
+        Acción: Completar triaje
+    end note
+
     PendienteDeTriaje --> ListoParaEvaluacion : Confirmar triaje
 
-    state ListoParaEvaluacion {
-        direction LR
-        AccionMed: Evaluar con el modelo
-        AccionMed ::: medico
-    }
-    
-    ListoParaEvaluacion --> DerivadoACardiologia : Registrar evaluación
+    note right of ListoParaEvaluacion
+        Rol: Médico clínico
+        Acción: Evaluar con el modelo
+    end note
 
-    state DerivadoACardiologia {
-        direction LR
-        AccionCardio: Registrar resolución
-        AccionCardio ::: cardiologia
-    }
-    
+    ListoParaEvaluacion --> DerivadoACardiologia : Derivar a cardiología
+
+    note right of DerivadoACardiologia
+        Rol: Cardiología
+        Acción: Registrar resolución
+    end note
+
     DerivadoACardiologia --> Cerrado : Cerrar caso
 
-    state Cerrado {
-        direction LR
-        AccionCoord: Ver cierre
-        AccionCoord ::: coordinacion
-    }
+    note right of Cerrado
+        Rol: Coordinación clínica
+        Acción: Ver cierre
+    end note
 
     Cerrado --> [*]
 ```
@@ -54,7 +49,7 @@ stateDiagram-v2
 2. **Médico Clínico**: 
    - **Estado:** Listo para evaluación
    - **Acción:** `Evaluar con el modelo`
-   - **Transición:** Genera evento "Evaluación médica registrada" y avanza a "Derivado a cardiología".
+   - **Transición:** Registra la conducta clínica y, si corresponde, deriva el caso a cardiología.
 3. **Cardiología**: 
    - **Estado:** Derivado a cardiología
    - **Acción:** `Registrar resolución`
