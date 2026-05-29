@@ -17,6 +17,7 @@ import {
   getTransitionEventTitle,
   roleLabels,
 } from "@/lib/case-helpers";
+import { buildAssessmentFromModel } from "@/services/classifier-service";
 
 type AdvanceStatusOptions = {
   eventTitle?: string;
@@ -152,6 +153,13 @@ export const patientService = {
 
     const updatedCase: PatientCase = {
       ...patient,
+      assessment:
+        currentRole === "enfermeria"
+          ? {
+              ...patient.assessment,
+              ...buildAssessmentFromModel(patient.modelInput),
+            }
+          : patient.assessment,
       workflow: {
         ...patient.workflow,
         status: newStatus,

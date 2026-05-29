@@ -107,8 +107,19 @@ export function ClinicalVariablesCard({
   );
 }
 
-export function MedicalRiskCard({ patientCase }: { patientCase: PatientCase }) {
+export function MedicalRiskCard({
+  patientCase,
+  logit,
+}: {
+  patientCase: PatientCase;
+  logit?: number;
+}) {
   const riskPercentage = Math.round(patientCase.assessment.riskProbability * 100);
+  const odds =
+    patientCase.assessment.riskProbability === 1
+      ? Number.POSITIVE_INFINITY
+      : patientCase.assessment.riskProbability /
+        (1 - patientCase.assessment.riskProbability);
   const riskTone =
     patientCase.assessment.riskLevel === "Alto"
       ? "border-red-500/20 bg-red-500/5"
@@ -166,6 +177,23 @@ export function MedicalRiskCard({ patientCase }: { patientCase: PatientCase }) {
           />
         </div>
       </div>
+
+      {typeof logit === "number" ? (
+        <div className="mt-5 grid gap-3 md:grid-cols-2">
+          <div className="rounded-xl border border-border/70 bg-background/80 px-4 py-3">
+            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+              Log-odds
+            </p>
+            <p className="mt-2 text-lg font-semibold">{logit.toFixed(4)}</p>
+          </div>
+          <div className="rounded-xl border border-border/70 bg-background/80 px-4 py-3">
+            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Odds</p>
+            <p className="mt-2 text-lg font-semibold">
+              {Number.isFinite(odds) ? odds.toFixed(4) : "Infinito"}
+            </p>
+          </div>
+        </div>
+      ) : null}
 
       {patientCase.assessment.topFactors.length > 0 ? (
         <div className="mt-5 rounded-xl border border-border/70 bg-background/80 px-4 py-3">

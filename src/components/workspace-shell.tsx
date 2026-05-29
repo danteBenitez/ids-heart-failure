@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import {
   ActivitySquare,
+  BrainCircuit,
   HeartPulse,
   LayoutDashboard,
   Stethoscope,
@@ -94,6 +95,14 @@ export function WorkspaceShellInner({ children }: WorkspaceShellProps) {
                   <Link href={withParams("/dashboard")}>
                     <LayoutDashboard />
                     <span>Tablero</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Modelo">
+                  <Link href={withParams("/dashboard/model")}>
+                    <BrainCircuit />
+                    <span>Modelo</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/dialog";
 import { roleActionCopy, roleBasePath } from "@/lib/case-helpers";
 import type { ModelFeaturePayload, PatientCase, RoleKey } from "@/lib/types";
+import { classify } from "@/services/classifier-service";
 import { patientService } from "@/services/patient-service";
 
 type CaseDetailViewProps = {
@@ -68,6 +69,10 @@ export function CaseDetailView({
   const canUpdateMedicalAssessment =
     activeRole === "medico" &&
     patientCase.workflow.status === "Derivado a cardiología";
+  const modelResult =
+    activeRole === "medico" || activeRole === "cardiologia"
+      ? classify(patientCase.modelInput)
+      : null;
 
   const basePath = roleBasePath[activeRole];
   const isClosed = patientCase.workflow.status === "Cerrado";
@@ -242,7 +247,7 @@ export function CaseDetailView({
       />
 
       {(activeRole === "medico" || activeRole === "cardiologia") && (
-        <MedicalRiskCard patientCase={patientCase} />
+        <MedicalRiskCard patientCase={patientCase} logit={modelResult?.logit} />
       )}
 
       <ClinicalVariablesCard

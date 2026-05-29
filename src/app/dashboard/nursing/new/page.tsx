@@ -22,7 +22,6 @@ type FormData = {
   age: string;
   sex: "" | "F" | "M";
   location: string;
-  risk: "" | "Bajo" | "Medio" | "Alto";
   chestPainType: string;
   exerciseAngina: string;
   restingBP: string;
@@ -41,7 +40,6 @@ const initialFormData: FormData = {
   age: "",
   sex: "",
   location: "",
-  risk: "",
   chestPainType: "",
   exerciseAngina: "",
   restingBP: "",
@@ -102,7 +100,6 @@ export default function NewNursingPatientPage() {
         stSlope: (form.stSlope || "Up") as "Up" | "Flat" | "Down",
       },
       assessment: {
-        riskLevel: (form.risk as "Bajo" | "Medio" | "Alto") || "Medio",
         clinicalSummary: form.notes.trim() || "Caso creado y pendiente de triaje.",
       },
     };
@@ -186,26 +183,14 @@ export default function NewNursingPatientPage() {
             </section>
 
             <section className="rounded-2xl border border-border/70 bg-background/70 p-5">
-              <SectionTitle title="Ubicación y riesgo inicial" />
-              <div className="mt-4 grid gap-4 md:grid-cols-2">
+              <SectionTitle title="Ubicación del caso" />
+              <div className="mt-4 grid gap-4 md:grid-cols-1">
                 <Field label="Ubicación / centro">
                   <Input
                     placeholder="Hospital Central"
                     value={form.location}
                     onChange={(e) => updateField("location", e.target.value)}
                   />
-                </Field>
-                <Field label="Riesgo estimado">
-                  <select
-                    className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                    value={form.risk}
-                    onChange={(e) => updateField("risk", e.target.value)}
-                  >
-                    <option value="">Seleccionar</option>
-                    <option value="Bajo">Bajo</option>
-                    <option value="Medio">Medio</option>
-                    <option value="Alto">Alto</option>
-                  </select>
                 </Field>
               </div>
             </section>

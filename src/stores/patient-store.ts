@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import type { PatientCase } from "@/lib/types";
 import { seedPatients } from "@/lib/seed-data";
+import { synchronizeCaseAssessment } from "@/services/classifier-service";
 
 // ---------------------------------------------------------------------------
 // Store de pacientes – Zustand con persistencia en localStorage
@@ -86,6 +87,8 @@ export const usePatientStore = create<PatientStore>()(
 
           if (patients.length === 0 || hasMalformed) {
             _state._setPatients(seedPatients);
+          } else {
+            _state._setPatients(patients.map((patient) => synchronizeCaseAssessment(patient)));
           }
 
           // Marcar como hidratado para que los componentes dejen de

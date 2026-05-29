@@ -1,4 +1,5 @@
 import type { PatientCase } from "./types";
+import { buildAssessmentFromModel } from "@/services/classifier-service";
 
 const seedTimestamp = "2026-05-28T12:00:00.000Z";
 
@@ -121,18 +122,19 @@ export const seedPatients: PatientCase[] = [
         },
       ],
     },
-    assessment: {
-      riskLevel: "Alto",
-      riskProbability: 0.86,
-      clinicalSummary:
-        "Caso preparado para consulta médica con factores de riesgo combinados.",
-      topFactors: [
-        "Dolor de pecho asintomático.",
-        "Glucemia en ayunas por encima de 120 mg/dl.",
-        "Angina inducida por ejercicio.",
-        "Pendiente ST plana.",
-      ],
-    },
+    assessment: buildAssessmentFromModel({
+      age: 63,
+      sex: "M",
+      chestPainType: "ASY",
+      restingBP: 145,
+      cholesterol: 289,
+      fastingBS: 1,
+      maxHR: 118,
+      exerciseAngina: "Sí",
+      oldpeak: 1.8,
+      restingECG: "ST",
+      stSlope: "Flat",
+    }),
     metadata: {
       createdAt: seedTimestamp,
       updatedAt: seedTimestamp,
@@ -191,15 +193,19 @@ export const seedPatients: PatientCase[] = [
       ],
     },
     assessment: {
-      riskLevel: "Alto",
-      riskProbability: 0.79,
-      clinicalSummary:
-        "Paciente ya priorizada y esperando confirmación del especialista.",
-      topFactors: [
-        "Glucemia en ayunas elevada.",
-        "Angina por ejercicio.",
-        "ECG con hipertrofia ventricular izquierda.",
-      ],
+      ...buildAssessmentFromModel({
+        age: 68,
+        sex: "F",
+        chestPainType: "ATA",
+        restingBP: 138,
+        cholesterol: 241,
+        fastingBS: 1,
+        maxHR: 126,
+        exerciseAngina: "Sí",
+        oldpeak: 2.1,
+        restingECG: "LVH",
+        stSlope: "Flat",
+      }),
       hasHeartDisease: true,
       finalDiagnosis: "Enfermedad coronaria estable de alto riesgo.",
       specialistNotes:
@@ -263,14 +269,19 @@ export const seedPatients: PatientCase[] = [
       ],
     },
     assessment: {
-      riskLevel: "Bajo",
-      riskProbability: 0.24,
-      clinicalSummary: "Caso cerrado por el médico clínico sin necesidad de derivación.",
-      topFactors: [
-        "Frecuencia cardíaca máxima conservada.",
-        "Presión en reposo dentro de rango.",
-        "Ausencia de angina por ejercicio.",
-      ],
+      ...buildAssessmentFromModel({
+        age: 52,
+        sex: "M",
+        chestPainType: "TA",
+        restingBP: 124,
+        cholesterol: 198,
+        fastingBS: 0,
+        maxHR: 162,
+        exerciseAngina: "No",
+        oldpeak: 0.1,
+        restingECG: "Normal",
+        stSlope: "Up",
+      }),
       clinicianDisposition: "Cerrar con control",
       clinicianNotes: "Sin criterios de derivación. Se indica control ambulatorio habitual.",
     },
