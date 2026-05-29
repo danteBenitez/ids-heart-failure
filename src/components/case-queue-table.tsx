@@ -26,6 +26,7 @@ type CaseQueueTableProps = {
   role: RoleKey;
   guide: string;
   headerAction?: ReactNode;
+  readOnly?: boolean;
 };
 
 export function CaseQueueTable({
@@ -35,6 +36,7 @@ export function CaseQueueTable({
   role,
   guide,
   headerAction,
+  readOnly = false,
 }: CaseQueueTableProps) {
   return (
     <Card className="border-border/70 bg-card/90">
@@ -59,44 +61,62 @@ export function CaseQueueTable({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {cases.map((patientCase) => (
-                <TableRow key={patientCase.id}>
-                  <TableCell className="pl-4 align-top">
-                    <div className="space-y-1">
-                      <p className="font-medium">{patientCase.patient.fullName}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {patientCase.patient.recordNumber}
-                      </p>
-                      <p className="max-w-md text-sm leading-6 text-muted-foreground whitespace-normal">
-                        {patientCase.assessment.clinicalSummary}
-                      </p>
+              {cases.length === 0 ? (
+                <TableRow className="hover:bg-transparent">
+                  <TableCell colSpan={6} className="h-32 text-center text-muted-foreground pl-4">
+                    <div className="flex flex-col items-center justify-center space-y-1.5 py-4">
+                      <p className="font-medium text-foreground/80 text-sm">No hay pacientes en esta bandeja por el momento</p>
+                      <p className="text-xs text-muted-foreground">Todos los casos han sido procesados o asignados a otros roles.</p>
                     </div>
                   </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {patientCase.patient.location}
-                  </TableCell>
-                  <TableCell>{patientCase.modelInput.age}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{patientCase.workflow.status}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        patientCase.assessment.riskLevel === "Alto" ? "default" : "secondary"
-                      }
-                    >
-                      Riesgo {patientCase.assessment.riskLevel}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Button asChild variant="outline" size="sm">
-                      <Link href={`/dashboard/cases/${patientCase.id}?guide=${guide}&role=${role}`}>
-                        Abrir caso
-                      </Link>
-                    </Button>
-                  </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                cases.map((patientCase) => (
+                  <TableRow key={patientCase.id}>
+                    <TableCell className="pl-4 align-top">
+                      <div className="space-y-1">
+                        <p className="font-medium">{patientCase.patient.fullName}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {patientCase.patient.recordNumber}
+                        </p>
+                        <p className="max-w-md text-sm leading-6 text-muted-foreground whitespace-normal">
+                          {patientCase.assessment.clinicalSummary}
+                        </p>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {patientCase.patient.location}
+                    </TableCell>
+                    <TableCell>{patientCase.modelInput.age}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center">
+                        <Badge variant="outline">{patientCase.workflow.status}</Badge>
+                        {readOnly && (
+                          <Badge variant="secondary" className="w-fit text-[10px] uppercase tracking-wider font-semibold bg-muted text-muted-foreground border-dashed">
+                            Solo lectura
+                          </Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          patientCase.assessment.riskLevel === "Alto" ? "default" : "secondary"
+                        }
+                      >
+                        Riesgo {patientCase.assessment.riskLevel}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Button asChild variant="outline" size="sm">
+                        <Link href={`/dashboard/cases/${patientCase.id}?guide=${guide}&role=${role}${readOnly ? "&readonly=true" : ""}`}>
+                          {readOnly ? "Ver caso" : "Abrir caso"}
+                        </Link>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </div>

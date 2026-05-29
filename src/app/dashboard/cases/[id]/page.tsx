@@ -18,6 +18,7 @@ export default function DashboardCaseDetailPage() {
   const id = params.id as string;
   const guide = searchParams.get("guide") ?? "on";
   const roleParam = searchParams.get("role");
+  const readonlyParam = searchParams.get("readonly") === "true";
 
   const patients = usePatientStore((s) => s.patients);
   const isHydrated = usePatientStore((s) => s.isHydrated);
@@ -53,6 +54,7 @@ export default function DashboardCaseDetailPage() {
       patientCase={patientCase}
       activeRole={activeRole}
       guide={guide}
+      readonly={readonlyParam}
     />
   );
 }

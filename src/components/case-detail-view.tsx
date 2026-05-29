@@ -13,6 +13,7 @@ import {
   TimelineCard,
 } from "@/components/case-detail-sections";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -29,12 +30,14 @@ type CaseDetailViewProps = {
   patientCase: PatientCase;
   activeRole: RoleKey;
   guide: string;
+  readonly?: boolean;
 };
 
 export function CaseDetailView({
   patientCase,
   activeRole,
   guide,
+  readonly = false,
 }: CaseDetailViewProps) {
   const router = useRouter();
   const [isAdvancing, setIsAdvancing] = useState(false);
@@ -61,10 +64,17 @@ export function CaseDetailView({
     patientCase.assessment.specialistNotes ?? "",
   );
 
+  const isReadOnly = patientCase.workflow.nextRole !== activeRole || readonly;
+  const canUpdateMedicalAssessment =
+    activeRole === "medico" &&
+    patientCase.workflow.status === "Derivado a cardiología";
+
   const basePath = roleBasePath[activeRole];
   const isClosed = patientCase.workflow.status === "Cerrado";
   const canEditVariables =
-    activeRole === "enfermeria" && patientCase.workflow.status === "Pendiente de triaje";
+    activeRole === "enfermeria" &&
+    patientCase.workflow.status === "Pendiente de triaje" &&
+    !isReadOnly;
 
   function updateEditableModelInput<K extends keyof ModelFeaturePayload>(
     key: K,
@@ -123,6 +133,24 @@ export function CaseDetailView({
     }
   }
 
+  async function handleUpdateMedicalAssessment(e: React.FormEvent) {
+    e.preventDefault();
+    if (isAdvancing || isClosed || clinicianDisposition === "") return;
+
+    setIsAdvancing(true);
+    try {
+      await patientService.updateAssessment(patientCase.id, {
+        clinicianDisposition,
+        clinicianNotes: clinicianNotes.trim(),
+      });
+      setIsMedicalDialogOpen(false);
+    } catch (error) {
+      console.error("Error al actualizar la evaluación médica:", error);
+    } finally {
+      setIsAdvancing(false);
+    }
+  }
+
   async function handleCardiologyResolution(e: React.FormEvent) {
     e.preventDefault();
     if (isAdvancing || isClosed || hasHeartDisease === "") return;
@@ -147,6 +175,55 @@ export function CaseDetailView({
     }
   }
 
+  const actionElement = (() => {
+    if (isReadOnly) {
+      return (
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary" className="bg-muted text-muted-foreground border-dashed">
+              Solo lectura
+            </Badge>
+            <span className="text-sm text-muted-foreground italic">
+              Estás viendo este caso en modo de solo lectura
+            </span>
+          </div>
+          {canUpdateMedicalAssessment && (
+            <Button variant="outline" size="sm" onClick={() => setIsMedicalDialogOpen(true)}>
+              Actualizar evaluación
+            </Button>
+          )}
+        </div>
+      );
+    }
+
+    if (activeRole === "medico") {
+      return (
+        <Button onClick={() => setIsMedicalDialogOpen(true)} disabled={isClosed}>
+          {patientCase.workflow.primaryActionLabel}
+        </Button>
+      );
+    }
+
+    if (activeRole === "cardiologia") {
+      return (
+        <Button onClick={() => setIsCardiologyDialogOpen(true)} disabled={isClosed}>
+          {patientCase.workflow.primaryActionLabel}
+        </Button>
+      );
+    }
+
+    if (activeRole === "coordinacion") {
+      return <Button disabled>{roleActionCopy.coordinacion.primaryAction}</Button>;
+    }
+
+    return (
+      <Button onClick={handleAdvanceStatus} disabled={isClosed || isAdvancing}>
+        {isAdvancing ? <Loader2 className="size-4 animate-spin" data-icon="inline-start" /> : null}
+        {roleActionCopy.enfermeria.primaryAction}
+      </Button>
+    );
+  })();
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap gap-3">
@@ -161,15 +238,7 @@ export function CaseDetailView({
       <CaseActionBar
         role={activeRole}
         task={patientCase.workflow.currentTask}
-        action={renderPrimaryAction({
-          activeRole,
-          isClosed,
-          isAdvancing,
-          primaryActionLabel: patientCase.workflow.primaryActionLabel,
-          onAdvance: handleAdvanceStatus,
-          onOpenMedical: () => setIsMedicalDialogOpen(true),
-          onOpenCardiology: () => setIsCardiologyDialogOpen(true),
-        })}
+        action={actionElement}
       />
 
       {(activeRole === "medico" || activeRole === "cardiologia") && (
@@ -223,13 +292,20 @@ export function CaseDetailView({
       <Dialog open={isMedicalDialogOpen} onOpenChange={setIsMedicalDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Registrar conducta clínica</DialogTitle>
+            <DialogTitle>
+              {canUpdateMedicalAssessment ? "Actualizar evaluación médica" : "Registrar conducta clínica"}
+            </DialogTitle>
             <DialogDescription>
-              Elegí la conducta a seguir para este caso y agregá una nota clínica breve.
+              {canUpdateMedicalAssessment
+                ? "Modificá la conducta o la nota clínica de este caso derivado."
+                : "Elegí la conducta a seguir para este caso y agregá una nota clínica breve."}
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleMedicalDisposition} className="grid gap-4">
+          <form
+            onSubmit={canUpdateMedicalAssessment ? handleUpdateMedicalAssessment : handleMedicalDisposition}
+            className="grid gap-4"
+          >
             <div className="grid gap-3">
               <DispositionCard
                 title="Derivar a cardiología"
@@ -258,7 +334,7 @@ export function CaseDetailView({
                 {isAdvancing ? (
                   <Loader2 className="size-4 animate-spin" data-icon="inline-start" />
                 ) : null}
-                Registrar conducta
+                {canUpdateMedicalAssessment ? "Actualizar evaluación" : "Registrar conducta"}
               </Button>
               <Button
                 type="button"
@@ -341,50 +417,5 @@ export function CaseDetailView({
         </DialogContent>
       </Dialog>
     </div>
-  );
-}
-
-function renderPrimaryAction({
-  activeRole,
-  isClosed,
-  isAdvancing,
-  primaryActionLabel,
-  onAdvance,
-  onOpenMedical,
-  onOpenCardiology,
-}: {
-  activeRole: RoleKey;
-  isClosed: boolean;
-  isAdvancing: boolean;
-  primaryActionLabel: string;
-  onAdvance: () => void;
-  onOpenMedical: () => void;
-  onOpenCardiology: () => void;
-}) {
-  if (activeRole === "medico") {
-    return (
-      <Button onClick={onOpenMedical} disabled={isClosed}>
-        {primaryActionLabel}
-      </Button>
-    );
-  }
-
-  if (activeRole === "cardiologia") {
-    return (
-      <Button onClick={onOpenCardiology} disabled={isClosed}>
-        {primaryActionLabel}
-      </Button>
-    );
-  }
-
-  if (activeRole === "coordinacion") {
-    return <Button disabled>{roleActionCopy.coordinacion.primaryAction}</Button>;
-  }
-
-  return (
-    <Button onClick={onAdvance} disabled={isClosed || isAdvancing}>
-      {isAdvancing ? <Loader2 className="size-4 animate-spin" data-icon="inline-start" /> : null}
-      {roleActionCopy.enfermeria.primaryAction}
-    </Button>
   );
 }

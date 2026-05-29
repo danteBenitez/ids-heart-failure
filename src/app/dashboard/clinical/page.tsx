@@ -23,13 +23,21 @@ export default function ClinicalPage() {
   }
 
   const clinicalCases = patients.filter(
-    (p) =>
-      p.workflow.nextRole === "medico" ||
-      p.workflow.status === "Listo para evaluación",
+    (p) => p.workflow.nextRole === "medico",
   );
 
+  const historyCases = patients.filter(
+    (p) =>
+      p.workflow.status === "Derivado a cardiología" ||
+      p.workflow.status === "Cerrado",
+  );
+
+  const derivedCount = patients.filter(
+    (p) => p.workflow.status === "Derivado a cardiología",
+  ).length;
+
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-8">
       <RoleDashboardSummary
         title="Médico clínico"
         description="Casos listos para evaluación clínica y definición de conducta."
@@ -42,26 +50,37 @@ export default function ClinicalPage() {
           },
           {
             icon: Activity,
-            label: "Opciones de salida",
-            value: "2",
-            note: "Derivar a cardiología o cerrar con control.",
+            label: "Derivados a cardiología",
+            value: String(derivedCount),
+            note: "Casos que pasaron por el médico y requieren especialista.",
           },
           {
             icon: ArrowUpRight,
-            label: "Escalamiento",
-            value: "Cardiología",
-            note: "Los casos priorizados siguen el circuito de derivación especializada.",
+            label: "Historial / Evaluados",
+            value: String(historyCases.length),
+            note: "Total de pacientes evaluados por clínica médica.",
           },
         ]}
       />
 
-      <CaseQueueTable
-        title="Casos pendientes"
-        description="Pacientes listos para evaluación clínica."
-        cases={clinicalCases}
-        role="medico"
-        guide={guide}
-      />
+      <div className="flex flex-col gap-6">
+        <CaseQueueTable
+          title="Casos Requiriendo Acción"
+          description="Pacientes listos para evaluación clínica y definición de conducta médica."
+          cases={clinicalCases}
+          role="medico"
+          guide={guide}
+        />
+
+        <CaseQueueTable
+          title="Historial de Evaluaciones y Seguimiento"
+          description="Casos ya evaluados (derivados a cardiología o cerrados) donde puedes consultar y ajustar tu evaluación médica."
+          cases={historyCases}
+          role="medico"
+          guide={guide}
+          readOnly={true}
+        />
+      </div>
     </div>
   );
 }

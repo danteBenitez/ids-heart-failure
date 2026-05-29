@@ -23,13 +23,15 @@ export default function CardiologyPage() {
   }
 
   const referredCases = patients.filter(
-    (p) =>
-      p.workflow.nextRole === "cardiologia" ||
-      p.workflow.status === "Derivado a cardiología",
+    (p) => p.workflow.nextRole === "cardiologia",
+  );
+
+  const historyCases = patients.filter(
+    (p) => p.workflow.status === "Cerrado",
   );
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-8">
       <RoleDashboardSummary
         title="Cardiología"
         description="Casos derivados para confirmación diagnóstica y resolución especializada."
@@ -38,30 +40,41 @@ export default function CardiologyPage() {
             icon: HeartPulse,
             label: "Pendientes de resolución",
             value: String(referredCases.length),
-            note: "Casos que ya atravesaron etapas previas y esperan resolución.",
+            note: "Casos que esperan diagnóstico o resolución definitiva.",
           },
           {
             icon: ShieldCheck,
-            label: "Entrada del rol",
-            value: "Derivación priorizada",
-            note: "La derivación llega con trazabilidad clínica y fundamentos.",
+            label: "Casos resueltos / Cerrados",
+            value: String(historyCases.length),
+            note: "Pacientes con diagnóstico definitivo y seguimiento cerrado.",
           },
           {
             icon: ArrowUpRight,
-            label: "Salida esperada",
-            value: "Cierre del caso",
-            note: "Cardiología registra el diagnóstico y cierra el caso.",
+            label: "Total en plataforma",
+            value: String(patients.length),
+            note: "Total general de pacientes en el circuito de insuficiencia cardíaca.",
           },
         ]}
       />
 
-      <CaseQueueTable
-        title="Casos pendientes"
-        description="Pacientes derivados con resolución clínica pendiente."
-        cases={referredCases}
-        role="cardiologia"
-        guide={guide}
-      />
+      <div className="flex flex-col gap-6">
+        <CaseQueueTable
+          title="Casos Requiriendo Acción"
+          description="Pacientes derivados para confirmación diagnóstica y conducta terapéutica especializada."
+          cases={referredCases}
+          role="cardiologia"
+          guide={guide}
+        />
+
+        <CaseQueueTable
+          title="Historial de Casos Cerrados"
+          description="Pacientes que ya fueron diagnosticados y su circuito de seguimiento está cerrado."
+          cases={historyCases}
+          role="cardiologia"
+          guide={guide}
+          readOnly={true}
+        />
+      </div>
     </div>
   );
 }

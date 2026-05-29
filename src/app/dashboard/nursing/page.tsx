@@ -25,21 +25,22 @@ export default function NursingPage() {
   }
 
   const pendingCases = patients.filter(
-    (p) =>
-      p.workflow.nextRole === "enfermeria" ||
-      p.workflow.status === "Pendiente de triaje",
+    (p) => p.workflow.nextRole === "enfermeria",
   );
 
-  const reviewNeeded = patients.filter(
+  const historyCases = patients.filter(
+    (p) => p.workflow.nextRole !== "enfermeria",
+  );
+
+  const reviewNeeded = pendingCases.filter(
     (p) =>
-      p.workflow.nextRole === "enfermeria" &&
-      (p.modelInput.restingBP === 0 ||
-        p.modelInput.cholesterol === 0 ||
-        p.modelInput.maxHR === 0),
+      p.modelInput.restingBP === 0 ||
+      p.modelInput.cholesterol === 0 ||
+      p.modelInput.maxHR === 0,
   ).length;
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-8">
       <RoleDashboardSummary
         title="Enfermería"
         description="Ingresos pendientes, triajes incompletos y carga inicial de pacientes."
@@ -48,40 +49,49 @@ export default function NursingPage() {
             icon: Clock3,
             label: "Pendientes de triaje",
             value: String(pendingCases.length),
-            note: "Casos listos para carga o validación inicial.",
+            note: "Casos que requieren tu acción inmediata.",
           },
           {
             icon: ClipboardPlus,
-            label: "Nuevos ingresos",
-            value: String(
-              patients.filter((p) => p.workflow.status === "Pendiente de triaje").length,
-            ),
-            note: "Pacientes que aún no pasaron por enfermería.",
+            label: "Historial / En seguimiento",
+            value: String(historyCases.length),
+            note: "Pacientes atendidos o en otras etapas.",
           },
           {
             icon: TriangleAlert,
             label: "Revisión requerida",
             value: String(reviewNeeded),
-            note: "Casos con datos pendientes de validar.",
+            note: "Casos pendientes con datos clínicos en 0.",
           },
         ]}
       />
 
-      <CaseQueueTable
-        title="Pacientes pendientes"
-        description="Pacientes con carga inicial o triaje por completar."
-        cases={pendingCases}
-        role="enfermeria"
-        guide={guide}
-        headerAction={
-          <Button asChild className="w-full md:w-auto">
-            <Link href={`/dashboard/nursing/new?guide=${guide}`}>
-              Cargar paciente nuevo
-              <ClipboardPlus data-icon="inline-end" />
-            </Link>
-          </Button>
-        }
-      />
+      <div className="flex flex-col gap-6">
+        <CaseQueueTable
+          title="Bandeja de Acción (Pendientes)"
+          description="Pacientes que requieren carga de variables clínicas y triaje inicial."
+          cases={pendingCases}
+          role="enfermeria"
+          guide={guide}
+          headerAction={
+            <Button asChild className="w-full md:w-auto">
+              <Link href={`/dashboard/nursing/new?guide=${guide}`}>
+                Cargar paciente nuevo
+                <ClipboardPlus data-icon="inline-end" />
+              </Link>
+            </Button>
+          }
+        />
+
+        <CaseQueueTable
+          title="Historial de Casos y Seguimiento"
+          description="Casos que ya han sido procesados por enfermería y se encuentran en seguimiento o cerrados."
+          cases={historyCases}
+          role="enfermeria"
+          guide={guide}
+          readOnly={true}
+        />
+      </div>
     </div>
   );
 }
