@@ -34,7 +34,7 @@ export default function RootLayout({
       suppressHydrationWarning
       className={cn(geistMono.variable, newsreader.variable, "font-sans", inter.variable)}
     >
-      <body>
+      <body suppressHydrationWarning>
         <ThemeProvider>
           <TooltipProvider>{children}</TooltipProvider>
         </ThemeProvider>

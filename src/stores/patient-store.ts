@@ -75,17 +75,20 @@ export const usePatientStore = create<PatientStore>()(
             );
           }
 
-          // Después de que persist haya mergeado, revisamos el estado real
-          const { patients } = usePatientStore.getState();
+          // Evitamos el error de TDZ (Temporal Dead Zone) difiriendo el acceso a 'usePatientStore'
+          // al siguiente tick del event loop, cuando la asignación de la variable ya ha concluido.
+          setTimeout(() => {
+            const { patients } = usePatientStore.getState();
 
-          if (patients.length === 0) {
-            // localStorage estaba vacío → cargar datos semilla
-            usePatientStore.setState({ patients: seedPatients });
-          }
+            if (patients.length === 0) {
+              // localStorage estaba vacío → cargar datos semilla
+              usePatientStore.setState({ patients: seedPatients });
+            }
 
-          // Marcar como hidratado para que los componentes dejen de
-          // mostrar el skeleton y rendericen los datos reales.
-          usePatientStore.setState({ isHydrated: true });
+            // Marcar como hidratado para que los componentes dejen de
+            // mostrar el skeleton y rendericen los datos reales.
+            usePatientStore.setState({ isHydrated: true });
+          }, 0);
         };
       },
     },
