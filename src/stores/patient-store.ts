@@ -80,8 +80,11 @@ export const usePatientStore = create<PatientStore>()(
           // Después de que persist haya mergeado, revisamos el estado real
           const { patients } = _state;
 
-          if (patients.length === 0) {
-            // localStorage estaba vacío → cargar datos semilla
+          // Si hay algún paciente malformado (p. ej. sin la propiedad 'workflow' debido a esquemas anteriores),
+          // o si la lista está vacía, restablecemos con los datos semilla para evitar crashes en el renderizado.
+          const hasMalformed = patients.some((p) => !p || !p.workflow || !p.workflow.status);
+
+          if (patients.length === 0 || hasMalformed) {
             _state._setPatients(seedPatients);
           }
 
