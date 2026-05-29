@@ -167,7 +167,7 @@ export function WorkspaceShellInner({ children }: WorkspaceShellProps) {
                   CardioFlow
                 </p>
                 <p className="text-sm font-medium">
-                  Gestión clínica de casos
+                  Sistema de asistencia al diagnóstico
                 </p>
               </div>
             </div>
