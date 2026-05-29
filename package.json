@@ -10,6 +10,7 @@
     "classify:model": "node scripts/classify-model.mjs"
   },
   "dependencies": {
+    "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-progress": "^1.1.8",
     "@tailwindcss/postcss": "^4.3.0",
     "class-variance-authority": "^0.7.1",
