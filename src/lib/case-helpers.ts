@@ -8,8 +8,6 @@ export function getCaseSummary(status: CaseStatus): string {
       "Caso preparado para evaluación médica con factores de riesgo registrados.",
     "Derivado a cardiología":
       "Paciente derivado y esperando resolución del especialista.",
-    "Seguimiento clínico":
-      "Caso con resolución especializada y seguimiento clínico pendiente.",
     Cerrado: "Caso cerrado con resolución clínica registrada.",
   };
 
@@ -19,10 +17,8 @@ export function getCaseSummary(status: CaseStatus): string {
 export function getCaseGuideStep(nextRole: RoleKey): string {
   const guideSteps: Record<RoleKey, string> = {
     enfermeria: "Registrar mediciones iniciales y confirmar el ingreso del caso.",
-    medico:
-      "Calcular el riesgo y decidir si corresponde seguimiento o derivación.",
-    cardiologia:
-      "Revisar el score, confirmar la conducta y registrar la resolución clínica.",
+    medico: "Calcular el riesgo y decidir si corresponde derivación o cierre clínico.",
+    cardiologia: "Revisar el score y registrar la resolución clínica final.",
     coordinacion: "Inspeccionar el historial completo y cómo se cerró el caso.",
   };
 
@@ -32,7 +28,7 @@ export function getCaseGuideStep(nextRole: RoleKey): string {
 export function getCaseActionLabel(nextRole: RoleKey): string {
   const actionLabels: Record<RoleKey, string> = {
     enfermeria: "Completar triaje",
-    medico: "Evaluar con el modelo",
+    medico: "Registrar conducta",
     cardiologia: "Registrar resolución",
     coordinacion: "Ver cierre",
   };
@@ -56,23 +52,19 @@ export const roleBasePath: Record<RoleKey, string> = {
 
 export const roleActionCopy: Record<
   RoleKey,
-  { primaryAction: string; secondaryAction: string }
+  { primaryAction: string }
 > = {
   enfermeria: {
     primaryAction: "Confirmar triaje",
-    secondaryAction: "Guardar borrador",
   },
   medico: {
     primaryAction: "Registrar evaluación",
-    secondaryAction: "Ver explicación del score",
   },
   cardiologia: {
     primaryAction: "Registrar resolución",
-    secondaryAction: "Cerrar caso",
   },
   coordinacion: {
     primaryAction: "Ver cierre",
-    secondaryAction: "Volver al tablero",
   },
 };
 
@@ -81,7 +73,6 @@ export function getNextStatus(current: CaseStatus): CaseStatus {
     "Pendiente de triaje": "Listo para evaluación",
     "Listo para evaluación": "Derivado a cardiología",
     "Derivado a cardiología": "Cerrado",
-    "Seguimiento clínico": "Cerrado",
     Cerrado: "Cerrado",
   };
 
@@ -110,29 +101,7 @@ export function getTransitionEventTitle(role: RoleKey): string {
   return transitionEventTitles[role];
 }
 
-export function getDispositionTransition(
-  disposition: "Cerrar caso" | "Solicitar seguimiento" | "Reevaluar",
-) {
-  if (disposition === "Solicitar seguimiento") {
-    return {
-      status: "Seguimiento clínico" as const,
-      nextRole: "medico" as const,
-      currentTask: "Revisar la resolución cardiológica y definir el plan de seguimiento.",
-      primaryActionLabel: "Registrar seguimiento",
-      eventTitle: "Seguimiento clínico solicitado",
-    };
-  }
-
-  if (disposition === "Reevaluar") {
-    return {
-      status: "Listo para evaluación" as const,
-      nextRole: "medico" as const,
-      currentTask: "Reevaluar el caso con la devolución de cardiología.",
-      primaryActionLabel: "Registrar reevaluación",
-      eventTitle: "Caso devuelto para reevaluación clínica",
-    };
-  }
-
+export function getCardiologyTransition() {
   return {
     status: "Cerrado" as const,
     nextRole: "coordinacion" as const,
@@ -143,18 +112,8 @@ export function getDispositionTransition(
 }
 
 export function getMedicalDispositionTransition(
-  disposition: "Derivar a cardiología" | "Seguimiento clínico" | "Cerrar con control",
+  disposition: "Derivar a cardiología" | "Cerrar con control",
 ) {
-  if (disposition === "Seguimiento clínico") {
-    return {
-      status: "Seguimiento clínico" as const,
-      nextRole: "medico" as const,
-      currentTask: "Registrar plan de seguimiento clínico y próximos controles.",
-      primaryActionLabel: "Actualizar seguimiento",
-      eventTitle: "Seguimiento clínico definido",
-    };
-  }
-
   if (disposition === "Cerrar con control") {
     return {
       status: "Cerrado" as const,

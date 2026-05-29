@@ -26,9 +26,6 @@ export default function DashboardPage() {
   const referred = patients.filter(
     (p) => p.workflow.status === "Derivado a cardiología",
   ).length;
-  const followUp = patients.filter(
-    (p) => p.workflow.status === "Seguimiento clínico",
-  ).length;
   const total = patients.length;
   const withCompleteVitals = patients.filter(
     (p) =>
@@ -56,7 +53,6 @@ export default function DashboardPage() {
             <StatusRow label="Pendiente de triaje" value={patients.filter((p) => p.workflow.status === "Pendiente de triaje").length} />
             <StatusRow label="Listo para evaluación" value={patients.filter((p) => p.workflow.status === "Listo para evaluación").length} />
             <StatusRow label="Derivado a cardiología" value={referred} />
-            <StatusRow label="Seguimiento clínico" value={followUp} />
             <StatusRow label="Cerrado" value={patients.filter((p) => p.workflow.status === "Cerrado").length} />
           </CardContent>
         </Card>

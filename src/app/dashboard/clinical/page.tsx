@@ -25,33 +25,26 @@ export default function ClinicalPage() {
   const clinicalCases = patients.filter(
     (p) =>
       p.workflow.nextRole === "medico" ||
-      p.workflow.status === "Listo para evaluación" ||
-      p.workflow.status === "Seguimiento clínico",
+      p.workflow.status === "Listo para evaluación",
   );
-  const followUpCases = clinicalCases.filter(
-    (p) =>
-      p.workflow.status === "Seguimiento clínico" ||
-      p.workflow.primaryActionLabel.toLowerCase().includes("reevalu"),
-  );
-  const initialEvaluationCases = clinicalCases.length - followUpCases.length;
 
   return (
     <div className="flex flex-col gap-6">
       <RoleDashboardSummary
         title="Médico clínico"
-        description="Bandeja clínica para evaluación inicial, reevaluación y seguimiento posterior."
+        description="Casos listos para evaluación clínica y definición de conducta."
         metrics={[
           {
             icon: FileHeart,
-            label: "Evaluación inicial",
-            value: String(initialEvaluationCases),
-            note: "Casos listos para score y definición de conducta inicial.",
+            label: "Pendientes de evaluación",
+            value: String(clinicalCases.length),
+            note: "Casos listos para score y decisión clínica.",
           },
           {
             icon: Activity,
-            label: "Seguimiento / reevaluación",
-            value: String(followUpCases.length),
-            note: "Casos devueltos por cardiología o con control clínico pendiente.",
+            label: "Opciones de salida",
+            value: "2",
+            note: "Derivar a cardiología o cerrar con control.",
           },
           {
             icon: ArrowUpRight,
@@ -64,7 +57,7 @@ export default function ClinicalPage() {
 
       <CaseQueueTable
         title="Casos pendientes"
-        description="Pacientes para evaluación inicial, reevaluación o seguimiento."
+        description="Pacientes listos para evaluación clínica."
         cases={clinicalCases}
         role="medico"
         guide={guide}

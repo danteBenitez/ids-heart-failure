@@ -49,8 +49,8 @@ export default function CardiologyPage() {
           {
             icon: ArrowUpRight,
             label: "Salida esperada",
-            value: "Resolución clínica",
-            note: "Cardiología confirma, corrige o cierra el caso.",
+            value: "Cierre del caso",
+            note: "Cardiología registra el diagnóstico y cierra el caso.",
           },
         ]}
       />

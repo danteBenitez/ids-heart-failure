@@ -59,15 +59,10 @@ export const seedPatients: PatientCase[] = [
       riskLevel: "Medio",
       riskProbability: 0.42,
       clinicalSummary: "Paciente con fatiga y dolor no anginal. Falta completar mediciones.",
-      insights: [
-        "Aún no hay score definitivo porque el caso no terminó la etapa de enfermería.",
-        "La app puede usar validaciones para detectar campos faltantes o inconsistentes.",
-      ],
       topFactors: [
         "Faltan mediciones clínicas para completar la evaluación.",
         "Dolor de pecho no anginal.",
       ],
-      recommendedAction: "Completar el triaje antes de solicitar evaluación médica.",
     },
     metadata: {
       createdAt: seedTimestamp,
@@ -97,8 +92,8 @@ export const seedPatients: PatientCase[] = [
     workflow: {
       status: "Listo para evaluación",
       nextRole: "medico",
-      currentTask: "Calcular el riesgo y decidir si corresponde seguimiento o derivación.",
-      primaryActionLabel: "Evaluar con el modelo",
+      currentTask: "Calcular el riesgo y decidir si corresponde derivación o cierre clínico.",
+      primaryActionLabel: "Registrar conducta",
       timeline: [
         {
           id: "evt-pac-271-1",
@@ -131,17 +126,12 @@ export const seedPatients: PatientCase[] = [
       riskProbability: 0.86,
       clinicalSummary:
         "Caso preparado para consulta médica con factores de riesgo combinados.",
-      insights: [
-        "La combinación de dolor asintomático, glucemia alta y baja tolerancia al ejercicio eleva el riesgo.",
-        "La evaluación médica decide si el caso requiere derivación especializada.",
-      ],
       topFactors: [
         "Dolor de pecho asintomático.",
         "Glucemia en ayunas por encima de 120 mg/dl.",
         "Angina inducida por ejercicio.",
         "Pendiente ST plana.",
       ],
-      recommendedAction: "Derivar a cardiología y solicitar estudios complementarios.",
     },
     metadata: {
       createdAt: seedTimestamp,
@@ -171,7 +161,7 @@ export const seedPatients: PatientCase[] = [
     workflow: {
       status: "Derivado a cardiología",
       nextRole: "cardiologia",
-      currentTask: "Revisar el score, confirmar la conducta y registrar la resolución clínica.",
+      currentTask: "Revisar el score y registrar la resolución clínica final.",
       primaryActionLabel: "Registrar resolución",
       timeline: [
         {
@@ -205,18 +195,15 @@ export const seedPatients: PatientCase[] = [
       riskProbability: 0.79,
       clinicalSummary:
         "Paciente ya priorizada y esperando confirmación del especialista.",
-      insights: [
-        "El score ya fue calculado y la derivación quedó justificada con trazabilidad.",
-        "La vista de cardiología debe recibir el contexto resumido, no repetir toda la carga manual.",
-      ],
       topFactors: [
         "Glucemia en ayunas elevada.",
         "Angina por ejercicio.",
         "ECG con hipertrofia ventricular izquierda.",
       ],
-      recommendedAction: "Confirmar conducta especializada y registrar resolución clínica.",
       hasHeartDisease: true,
-      resolutionDisposition: "Cerrar caso",
+      finalDiagnosis: "Enfermedad coronaria estable de alto riesgo.",
+      specialistNotes:
+        "Se confirma la necesidad de manejo especializado y cierre con indicaciones.",
     },
     metadata: {
       createdAt: seedTimestamp,
@@ -277,23 +264,15 @@ export const seedPatients: PatientCase[] = [
     },
     assessment: {
       riskLevel: "Bajo",
-      riskProbability: 0.18,
-      clinicalSummary: "Caso cerrado con seguimiento preventivo y sin derivación.",
-      insights: [
-        "Sirve para mostrar que la app no solo deriva, también documenta casos de bajo riesgo.",
-        "El tablero administrativo puede usar este cierre para métricas de eficiencia y seguimiento.",
-      ],
+      riskProbability: 0.24,
+      clinicalSummary: "Caso cerrado por el médico clínico sin necesidad de derivación.",
       topFactors: [
         "Frecuencia cardíaca máxima conservada.",
         "Presión en reposo dentro de rango.",
         "Ausencia de angina por ejercicio.",
       ],
-      recommendedAction: "Mantener seguimiento clínico habitual.",
-      hasHeartDisease: false,
-      finalDiagnosis: "Sin evidencia clínica de enfermedad cardíaca activa.",
-      specialistNotes:
-        "Se indica control ambulatorio y refuerzo de medidas preventivas.",
-      resolutionDisposition: "Solicitar seguimiento",
+      clinicianDisposition: "Cerrar con control",
+      clinicianNotes: "Sin criterios de derivación. Se indica control ambulatorio habitual.",
     },
     metadata: {
       createdAt: seedTimestamp,

@@ -10,7 +10,7 @@ import type {
 import {
   getCaseActionLabel,
   getCaseGuideStep,
-  getDispositionTransition,
+  getCardiologyTransition,
   getMedicalDispositionTransition,
   getNextRole,
   getNextStatus,
@@ -92,9 +92,7 @@ export const patientService = {
         riskProbability: 0,
         clinicalSummary:
           input.assessment?.clinicalSummary ?? "Caso creado y pendiente de triaje.",
-        insights: input.assessment?.insights ?? [],
         topFactors: input.assessment?.topFactors ?? [],
-        recommendedAction: input.assessment?.recommendedAction,
       },
       metadata: {
         createdAt: now,
@@ -117,6 +115,8 @@ export const patientService = {
 
     const normalizedOptions =
       typeof options === "string" ? { note: options } : (options ?? {});
+    console.log({ status: patient.workflow.status });
+
     const now = new Date().toISOString();
     const currentRole = patient.workflow.nextRole;
     const newStatus = normalizedOptions.nextStatus ?? getNextStatus(patient.workflow.status);
@@ -214,7 +214,7 @@ export const patientService = {
     return updatedCase;
   },
 
-  getDispositionTransition,
+  getCardiologyTransition,
   getMedicalDispositionTransition,
 };
 
@@ -223,12 +223,12 @@ function buildRecordNumber() {
 }
 
 function getStatusesForRole(role: RoleKey) {
-  const statusByRole = {
+  const statusByRole: Record<RoleKey, readonly CaseStatus[]> = {
     enfermeria: ["Pendiente de triaje"],
-    medico: ["Listo para evaluación", "Seguimiento clínico"],
+    medico: ["Listo para evaluación"],
     cardiologia: ["Derivado a cardiología"],
     coordinacion: ["Cerrado"],
-  } as const;
+  };
 
   return statusByRole[role];
 }

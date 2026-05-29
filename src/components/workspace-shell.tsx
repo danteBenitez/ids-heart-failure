@@ -5,7 +5,6 @@ import { Suspense } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import {
   ActivitySquare,
-  ChevronRight,
   HeartPulse,
   LayoutDashboard,
   Stethoscope,
@@ -159,7 +158,7 @@ export function WorkspaceShellInner({ children }: WorkspaceShellProps) {
                   CardioFlow
                 </p>
                 <p className="text-sm font-medium">
-                  Seguimiento clínico de pacientes
+                  Gestión clínica de casos
                 </p>
               </div>
             </div>

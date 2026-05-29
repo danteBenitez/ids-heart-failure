@@ -2,7 +2,6 @@ export type CaseStatus =
   | "Pendiente de triaje"
   | "Listo para evaluación"
   | "Derivado a cardiología"
-  | "Seguimiento clínico"
   | "Cerrado";
 
 export type RiskLevel = "Bajo" | "Medio" | "Alto";
@@ -50,15 +49,12 @@ export type CaseAssessment = {
   riskLevel: RiskLevel;
   riskProbability: number;
   clinicalSummary: string;
-  insights: string[];
   topFactors: string[];
-  recommendedAction?: string;
-  clinicianDisposition?: "Derivar a cardiología" | "Seguimiento clínico" | "Cerrar con control";
+  clinicianDisposition?: "Derivar a cardiología" | "Cerrar con control";
   clinicianNotes?: string;
   hasHeartDisease?: boolean;
   finalDiagnosis?: string;
   specialistNotes?: string;
-  resolutionDisposition?: "Cerrar caso" | "Solicitar seguimiento" | "Reevaluar";
 };
 
 export type CaseMetadata = {
@@ -78,12 +74,7 @@ export type PatientCase = {
 export type CreatePatientInput = {
   patient: Omit<PatientIdentity, "recordNumber">;
   modelInput: ModelFeaturePayload;
-  assessment?: Partial<
-    Pick<
-      CaseAssessment,
-      "riskLevel" | "clinicalSummary" | "insights" | "topFactors" | "recommendedAction"
-    >
-  >;
+  assessment?: Partial<Pick<CaseAssessment, "riskLevel" | "clinicalSummary" | "topFactors">>;
 };
 
 export type UpdateModelInput = Partial<ModelFeaturePayload>;
